@@ -1,10 +1,11 @@
 package com.example.demo.controller;
 
 import com.example.demo.model.ChatRoom;
+import com.example.demo.service.ChatRoomService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -13,17 +14,12 @@ import java.util.Optional;
 @CrossOrigin(origins = "http://localhost:5173")
 public class ChatRoomController {
 
-    // Simple In-Memory Storage
-    private static final List<ChatRoom> activeRooms = new ArrayList<>();
-
-    // Initialize with a default global room
-    static {
-        activeRooms.add(new ChatRoom("General Lobby", 100, "System"));
-    }
+    @Autowired
+    private ChatRoomService chatRoomService;
 
     @GetMapping
     public List<ChatRoom> getRooms() {
-        return activeRooms;
+        return chatRoomService.getRooms();
     }
 
     @PostMapping
@@ -32,12 +28,11 @@ public class ChatRoomController {
             return ResponseEntity.badRequest().body("Max members must be at least 2");
         }
 
-        ChatRoom newRoom = new ChatRoom(
+        ChatRoom newRoom = chatRoomService.createRoom(
                 roomRequest.getName(),
                 roomRequest.getMaxMembers(),
                 roomRequest.getCreatedBy());
 
-        activeRooms.add(newRoom);
         return ResponseEntity.ok(newRoom);
     }
 
@@ -48,25 +43,16 @@ public class ChatRoomController {
             return ResponseEntity.badRequest().body("Username is required");
         }
 
-        Optional<ChatRoom> roomOpt = activeRooms.stream()
-                .filter(r -> r.getId().equals(roomId))
-                .findFirst();
+        boolean success = chatRoomService.joinRoom(roomId, username);
+        Optional<ChatRoom> roomOpt = chatRoomService.getRoomById(roomId);
 
         if (roomOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
         ChatRoom room = roomOpt.get();
-        boolean joined = room.addMember(username);
-
-        if (!joined) {
-            // Check if already member
-            if (room.getCurrentMembers() >= room.getMaxMembers()) {
-                return ResponseEntity.badRequest().body("Room is full");
-            }
-            // If addMember returned false but room not full, user probably already in set.
-            // We can treat this as success (idempotent).
-            return ResponseEntity.ok(room);
+        if (!success && room.getCurrentMembers() >= room.getMaxMembers() && !room.getMembers().contains(username)) {
+            return ResponseEntity.badRequest().body("Room is full");
         }
 
         return ResponseEntity.ok(room);
@@ -80,14 +66,7 @@ public class ChatRoomController {
             return ResponseEntity.badRequest().body("Username is required");
         }
 
-        Optional<ChatRoom> roomOpt = activeRooms.stream()
-                .filter(r -> r.getId().equals(roomId))
-                .findFirst();
-
-        if (roomOpt.isPresent()) {
-            roomOpt.get().removeMember(username);
-            return ResponseEntity.ok().build();
-        }
-        return ResponseEntity.notFound().build();
+        chatRoomService.leaveRoom(roomId, username);
+        return ResponseEntity.ok().build();
     }
 }

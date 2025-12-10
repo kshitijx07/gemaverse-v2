@@ -10,7 +10,8 @@ import {
     Target,
     MessageSquare,
     ArrowLeft,
-    Crosshair
+    Crosshair,
+    Gamepad2
 } from 'lucide-react';
 import ChatRooms from '../components/ChatRooms';
 import RoomLobby from '../components/RoomLobby';
@@ -82,7 +83,9 @@ export default function ChatPage() {
         if (currentRoom) {
             try {
                 await axios.post(`/api/chat/rooms/${currentRoom.id}/leave`, { username });
-            } catch (e) { }
+            } catch (e) {
+                console.error("Error leaving room:", e);
+            }
         }
         setCurrentRoom(null);
     };
@@ -114,6 +117,7 @@ export default function ChatPage() {
                 <nav className="flex-1 flex flex-col gap-10 w-full">
                     {[
                         { icon: LayoutDashboard, path: '/dashboard' },
+                        { icon: Gamepad2, path: '/games' },
                         { icon: Sword, path: '/matchmaking' },
                         { icon: Trophy, path: '/leaderboard' },
                         { icon: Target, path: '/reviews' },
@@ -139,13 +143,22 @@ export default function ChatPage() {
             {/* MAIN CONTENT */}
             <main className="flex-1 relative overflow-hidden p-0 flex flex-col z-10">
                 {currentRoom && (
-                    <div className="h-16 border-b border-white/10 bg-[#0F1923]/95 flex items-center px-6 justify-between backdrop-blur-md">
-                        <button onClick={handleLeaveRoom} className="flex items-center gap-2 text-game-gray hover:text-game-red transition-colors text-xs uppercase tracking-widest font-mono group">
-                            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Return to Lobby
+                    <div className="h-20 border-b border-white/10 bg-[#0F1923]/95 flex items-center px-8 justify-between backdrop-blur-md z-20">
+                        <button
+                            onClick={handleLeaveRoom}
+                            className="flex items-center gap-3 px-4 py-2 bg-game-red/10 border border-game-red/50 text-game-red hover:bg-game-red hover:text-white transition-all duration-300 text-xs font-bold uppercase tracking-widest clip-path-slant group"
+                        >
+                            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                            <span>Disengage</span>
                         </button>
-                        <div>
-                            <span className="text-xs text-game-gray font-mono mr-2">SECURE_CHANNEL:</span>
-                            <span className="text-sm font-bold tracking-wide text-white uppercase">{currentRoom.name}</span>
+
+                        <div className="flex flex-col items-end">
+                            <div className="text-[10px] text-game-gray font-mono tracking-widest uppercase mb-1 flex items-center gap-2">
+                                <span className="w-2 h-2 bg-game-green rounded-full animate-pulse" /> SECURE_CHANNEL:
+                            </div>
+                            <div className="text-xl font-black tracking-tighter text-white uppercase italic">
+                                {currentRoom.name}
+                            </div>
                         </div>
                     </div>
                 )}

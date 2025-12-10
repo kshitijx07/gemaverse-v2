@@ -9,6 +9,9 @@ import Leaderboard from './pages/Leaderboard';
 import GameReviews from './pages/GameReviews';
 import MyStats from './pages/MyStats';
 import ChatPage from './pages/ChatPage';
+import GamesPage from './pages/GamesPage';
+import SnakeGame from './pages/SnakeGame';
+import TicTacToeGame from './pages/TicTacToeGame';
 
 function App() {
   return (
@@ -24,6 +27,9 @@ function App() {
         <Route path="/reviews" element={<GameReviews />} />
         <Route path="/stats" element={<MyStats />} />
         <Route path="/chat" element={<ChatPage />} />
+        <Route path="/games" element={<GamesPage />} />
+        <Route path="/games/snake" element={<SnakeGame />} />
+        <Route path="/games/tictactoe" element={<TicTacToeGame />} />
       </Routes>
     </Router>
   );

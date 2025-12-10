@@ -17,14 +17,7 @@ const Navbar = () => {
                     GAME<span className="text-game-red">VERSE</span>_HUD
                 </Link>
 
-                <div className="hidden md:flex gap-8 font-mono text-xs tracking-widest text-game-gray">
-                    {['ENGINE', 'AGENTS', 'ARSENAL', 'MAPS'].map(item => (
-                        <a key={item} href={`#${item.toLowerCase()}`} className="hover:text-game-red transition-colors relative group">
-                            {item}
-                            <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 w-0 h-[2px] bg-game-red transition-all group-hover:w-full" />
-                        </a>
-                    ))}
-                </div>
+
 
                 <div className="flex items-center gap-4">
                     <Link to="/login" className="px-6 py-2 border border-white/20 text-xs font-bold uppercase tracking-widest hover:bg-game-red hover:border-game-red hover:text-black transition-all clip-path-slant text-white">

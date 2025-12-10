@@ -25,6 +25,8 @@ public class User {
     private int deaths = 0;
     private String bio = "New Recruit";
     private int playTime = 0; // In hours
+    private int snakeHighScore = 0;
+    private int totalXp = 0;
 
     // Getters and Setters
     public Long getId() {
@@ -113,5 +115,21 @@ public class User {
 
     public void setPlayTime(int playTime) {
         this.playTime = playTime;
+    }
+
+    public int getSnakeHighScore() {
+        return snakeHighScore;
+    }
+
+    public void setSnakeHighScore(int snakeHighScore) {
+        this.snakeHighScore = snakeHighScore;
+    }
+
+    public int getTotalXp() {
+        return totalXp;
+    }
+
+    public void setTotalXp(int totalXp) {
+        this.totalXp = totalXp;
     }
 }

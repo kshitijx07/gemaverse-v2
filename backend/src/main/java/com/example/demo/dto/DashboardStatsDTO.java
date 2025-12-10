@@ -9,6 +9,8 @@ public class DashboardStatsDTO {
     private double winRate;
     private String kdRatio;
     private int playTime;
+    private int snakeHighScore;
+    private int totalXp;
 
     // Constructors
     public DashboardStatsDTO() {
@@ -77,5 +79,21 @@ public class DashboardStatsDTO {
 
     public void setPlayTime(int playTime) {
         this.playTime = playTime;
+    }
+
+    public int getSnakeHighScore() {
+        return snakeHighScore;
+    }
+
+    public void setSnakeHighScore(int snakeHighScore) {
+        this.snakeHighScore = snakeHighScore;
+    }
+
+    public int getTotalXp() {
+        return totalXp;
+    }
+
+    public void setTotalXp(int totalXp) {
+        this.totalXp = totalXp;
     }
 }

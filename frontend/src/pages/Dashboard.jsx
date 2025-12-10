@@ -14,8 +14,10 @@ import {
     Activity,
     Zap,
     Crosshair,
-    Shield
+    Shield,
+    Gamepad2
 } from 'lucide-react';
+
 
 export default function Dashboard() {
     const navigate = useNavigate();
@@ -129,6 +131,7 @@ export default function Dashboard() {
                 <nav className="flex-1 flex flex-col gap-10 w-full">
                     {[
                         { icon: LayoutDashboard, path: '/dashboard' },
+                        { icon: Gamepad2, path: '/games' },
                         { icon: Sword, path: '/matchmaking' },
                         { icon: Trophy, path: '/leaderboard' },
                         { icon: Target, path: '/reviews' },

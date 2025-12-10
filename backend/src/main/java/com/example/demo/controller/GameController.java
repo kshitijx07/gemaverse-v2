@@ -22,6 +22,9 @@ public class GameController {
     @Autowired
     private ReviewRepository reviewRepository;
 
+    @Autowired
+    private com.example.demo.repository.UserRepository userRepository;
+
     @GetMapping
     public List<Game> getAllGames() {
         return gameRepository.findAll();
@@ -58,5 +61,68 @@ public class GameController {
     public Review addReview(@PathVariable Long gameId, @RequestBody Review review) {
         review.setGameId(gameId);
         return reviewRepository.save(review);
+    }
+
+    @PostMapping("/submit")
+    public ResponseEntity<?> submitGameResult(@RequestBody Map<String, Object> payload) {
+        String username = (String) payload.get("username");
+        String game = (String) payload.get("game");
+
+        // Handle different number types (Gson/Jackson might parse as Double)
+        int score = 0;
+        if (payload.get("score") instanceof Number) {
+            score = ((Number) payload.get("score")).intValue();
+        }
+
+        String result = (String) payload.get("result"); // WIN, LOSS, DRAW, COMPLETED
+
+        if (username == null || game == null) {
+            return ResponseEntity.badRequest().body("Missing required fields");
+        }
+
+        java.util.Optional<com.example.demo.model.User> userOpt = userRepository.findByUsername(username);
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        com.example.demo.model.User user = userOpt.get();
+
+        if ("SNAKE".equalsIgnoreCase(game)) {
+            // Update Snake High Score
+            if (score > user.getSnakeHighScore()) {
+                user.setSnakeHighScore(score);
+            }
+        } else if ("TICTACTOE".equalsIgnoreCase(game)) {
+            if ("WIN".equalsIgnoreCase(result)) {
+                user.setWins(user.getWins() + 1);
+            } else if ("LOSS".equalsIgnoreCase(result)) {
+                user.setLosses(user.getLosses() + 1);
+            }
+        }
+
+        // --- DYNAMIC RANKING POLICY ---
+        // Calculate Total XP based on all game stats
+        // TTT Win = 100 XP
+        // Snake Score = 1 XP per point (High Score)
+        // Play Time = 10 XP per hour
+        int newTotalXp = (user.getWins() * 100) + user.getSnakeHighScore() + (user.getPlayTime() * 10);
+        user.setTotalXp(newTotalXp);
+
+        // Update Rank Badge based on XP
+        if (newTotalXp < 500) {
+            user.setRankBadge("Bronze");
+        } else if (newTotalXp < 1500) {
+            user.setRankBadge("Silver");
+        } else if (newTotalXp < 3000) {
+            user.setRankBadge("Gold");
+        } else if (newTotalXp < 5000) {
+            user.setRankBadge("Platinum");
+        } else {
+            user.setRankBadge("Diamond");
+        }
+
+        userRepository.save(user);
+
+        return ResponseEntity.ok(user); // Return updated user stats
     }
 }

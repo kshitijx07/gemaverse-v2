@@ -1,0 +1,248 @@
+import React, { useRef, useEffect, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { gsap } from 'gsap';
+import { ArrowLeft, Trophy, Activity, AlertTriangle } from 'lucide-react';
+import axios from 'axios';
+
+const GRID_SIZE = 20;
+const CELL_SIZE = 20; // Will be dynamic based on container
+const SPEED = 100;
+
+export default function SnakeGame() {
+    const navigate = useNavigate();
+    const canvasRef = useRef(null);
+
+    // Game State
+    const [snake, setSnake] = useState([{ x: 10, y: 10 }]);
+    const [food, setFood] = useState({ x: 15, y: 15 });
+    const [direction, setDirection] = useState({ x: 0, y: 0 }); // Start static
+    const [score, setScore] = useState(0);
+    const [highScore, setHighScore] = useState(0);
+    const [gameOver, setGameOver] = useState(false);
+    const [gameStarted, setGameStarted] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Refs for mutable state in the loop
+    const snakeRef = useRef(snake);
+    const foodRef = useRef(food);
+    const directionRef = useRef(direction);
+    const gameLoopRef = useRef(null);
+    const scoreRef = useRef(0);
+    const gameOverRef = useRef(false);
+
+    const initGame = useCallback(() => {
+        setSnake([{ x: 10, y: 10 }]);
+        setFood({ x: 15, y: 15 });
+        setDirection({ x: 1, y: 0 });
+        setScore(0);
+        setGameOver(false);
+        setGameStarted(true);
+        setIsSubmitting(false);
+
+        snakeRef.current = [{ x: 10, y: 10 }];
+        foodRef.current = { x: 15, y: 15 };
+        directionRef.current = { x: 1, y: 0 };
+        scoreRef.current = 0;
+        gameOverRef.current = false;
+
+        if (gameLoopRef.current) clearInterval(gameLoopRef.current);
+        gameLoopRef.current = setInterval(gameLoop, SPEED);
+    }, []);
+
+    const endGame = async () => {
+        clearInterval(gameLoopRef.current);
+        setGameOver(true);
+        gameOverRef.current = true;
+        setGameStarted(false);
+
+        // Submit Score
+        const username = localStorage.getItem('username');
+        if (username) {
+            setIsSubmitting(true);
+            try {
+                await axios.post('/api/games/submit', {
+                    username,
+                    game: 'SNAKE',
+                    score: scoreRef.current,
+                    result: 'COMPLETED'
+                });
+            } catch (e) {
+                console.error("Score submission failed", e);
+            } finally {
+                setIsSubmitting(false);
+            }
+        }
+    };
+
+    const gameLoop = () => {
+        if (gameOverRef.current) return;
+
+        const head = { ...snakeRef.current[0] };
+        head.x += directionRef.current.x;
+        head.y += directionRef.current.y;
+
+        // Collision Check (Walls)
+        if (head.x < 0 || head.x >= 30 || head.y < 0 || head.y >= 20) { // 30x20 Grid
+            endGame();
+            return;
+        }
+
+        // Collision Check (Self)
+        if (snakeRef.current.some(segment => segment.x === head.x && segment.y === head.y)) {
+            endGame();
+            return;
+        }
+
+        const newSnake = [head, ...snakeRef.current];
+
+        // Food Check
+        if (head.x === foodRef.current.x && head.y === foodRef.current.y) {
+            scoreRef.current += 10;
+            setScore(scoreRef.current);
+            // New Food
+            foodRef.current = {
+                x: Math.floor(Math.random() * 30),
+                y: Math.floor(Math.random() * 20)
+            };
+            setFood(foodRef.current);
+        } else {
+            newSnake.pop();
+        }
+
+        snakeRef.current = newSnake;
+        setSnake(newSnake);
+    };
+
+    // Input Handling
+    useEffect(() => {
+        const handleKey = (e) => {
+            if (!gameStarted && e.code === 'Space') {
+                initGame();
+                return;
+            }
+            if (!gameStarted) return;
+
+            switch (e.key) {
+                case 'ArrowUp': if (directionRef.current.y === 0) directionRef.current = { x: 0, y: -1 }; break;
+                case 'ArrowDown': if (directionRef.current.y === 0) directionRef.current = { x: 0, y: 1 }; break;
+                case 'ArrowLeft': if (directionRef.current.x === 0) directionRef.current = { x: -1, y: 0 }; break;
+                case 'ArrowRight': if (directionRef.current.x === 0) directionRef.current = { x: 1, y: 0 }; break;
+            }
+        };
+        window.addEventListener('keydown', handleKey);
+        return () => window.removeEventListener('keydown', handleKey);
+    }, [gameStarted, initGame]);
+
+    // Render Logic
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        const ctx = canvas.getContext('2d');
+
+        // Clear
+        ctx.fillStyle = '#0F1923';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Draw Grid (Subtle)
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+        ctx.lineWidth = 1;
+        for (let i = 0; i <= 30; i++) {
+            ctx.beginPath();
+            ctx.moveTo(i * 20, 0);
+            ctx.lineTo(i * 20, 400);
+            ctx.stroke();
+        }
+        for (let i = 0; i <= 20; i++) {
+            ctx.beginPath();
+            ctx.moveTo(0, i * 20);
+            ctx.lineTo(600, i * 20);
+            ctx.stroke();
+        }
+
+        // Draw Food
+        ctx.fillStyle = '#FCE300';
+        ctx.shadowColor = '#FCE300';
+        ctx.shadowBlur = 10;
+        ctx.fillRect(food.x * 20, food.y * 20, 18, 18);
+        ctx.shadowBlur = 0;
+
+        // Draw Snake
+        snake.forEach((segment, i) => {
+            ctx.fillStyle = i === 0 ? '#FFFFFF' : '#FF4655'; // Head White, Body Red
+            ctx.fillRect(segment.x * 20, segment.y * 20, 18, 18);
+        });
+
+    }, [snake, food]);
+
+    return (
+        <div className="min-h-screen bg-game-dark text-white font-mono flex flex-col items-center justify-center p-10 cursor-none selection:bg-game-red selection:text-black">
+
+            {/* Header */}
+            <div className="w-full max-w-4xl flex justify-between items-center mb-8">
+                <button
+                    onClick={() => navigate('/games')}
+                    className="flex items-center gap-2 text-game-gray hover:text-game-red transition-colors text-xs uppercase tracking-widest clip-path-slant bg-white/5 py-2 px-4"
+                >
+                    <ArrowLeft className="w-4 h-4" /> Abort Mission
+                </button>
+                <div className="text-center">
+                    <h1 className="text-3xl font-black italic tracking-tighter uppercase text-game-red">SNAKE <span className="text-white">PROTOCOL</span></h1>
+                    <div className="text-xs text-game-gray tracking-[0.3em]">SECURE CHANNEL ESTABLISHED</div>
+                </div>
+                <div className="bg-game-red/10 border border-game-red/50 px-6 py-2 clip-path-slant flex flex-col items-end">
+                    <div className="text-[10px] text-game-gray uppercase tracking-widest">Score Data</div>
+                    <div className="text-2xl font-bold text-game-yellow">{score}</div>
+                </div>
+            </div>
+
+            {/* Game Container */}
+            <div className="relative group">
+                <div className="absolute -inset-1 bg-gradient-to-r from-game-red to-game-yellow opacity-30 blur group-hover:opacity-50 transition-opacity duration-500 rounded-lg"></div>
+                <div className="relative border-2 border-white/10 bg-[#000] p-1 clip-path-slant">
+                    <canvas
+                        ref={canvasRef}
+                        width={600}
+                        height={400}
+                        className="bg-[#0F1923] cursor-none"
+                    />
+
+                    {/* Overlay: Game Start */}
+                    {!gameStarted && !gameOver && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm z-10">
+                            <Activity className="w-16 h-16 text-game-red mb-4 animate-pulse" />
+                            <div className="text-4xl font-black uppercase italic text-white mb-2">Initialize?</div>
+                            <div className="text-sm text-game-yellow font-mono tracking-widest animate-pulse">[ PRESS SPACE TO ENGAGE ]</div>
+                            <div className="mt-8 text-xs text-game-gray max-w-xs text-center">
+                                Use Arrow Keys. Acquire Data Packets. Avoid Grid Walls.
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Overlay: Game Over */}
+                    {gameOver && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-red-900/90 backdrop-blur-md z-20">
+                            <AlertTriangle className="w-16 h-16 text-white mb-4" />
+                            <div className="text-5xl font-black uppercase italic text-white mb-2 drop-shadow-md">TERMINATED</div>
+                            <div className="text-2xl font-mono text-game-yellow mb-6">FINAL SCORE: {score}</div>
+
+                            {isSubmitting ? (
+                                <div className="text-xs text-white tracking-widest animate-pulse">UPLOADING TO MAINFRAME...</div>
+                            ) : (
+                                <button
+                                    onClick={initGame}
+                                    className="px-8 py-3 bg-white text-black font-bold uppercase tracking-widest hover:bg-game-yellow transition-colors clip-path-slant"
+                                >
+                                    Re-Initialize
+                                </button>
+                            )}
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            <div className="mt-8 text-[10px] text-game-gray tracking-widest uppercase">
+                System ID: {localStorage.getItem('username') || 'UNKNOWN'} // Global Rank Impact: ENABLED
+            </div>
+
+        </div>
+    );
+}

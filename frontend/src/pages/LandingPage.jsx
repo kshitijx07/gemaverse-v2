@@ -351,37 +351,7 @@ export default function LandingPage() {
 
             </section>
 
-            {/* NEXT GEN ENGINE (Features) */}
-            <section className="py-32 px-6 bg-game-dark border-t border-white/10 relative z-10">
-                <div className="max-w-[1400px] mx-auto">
-                    <div className="flex flex-col md:flex-row justify-between items-end mb-20 border-b border-white/10 pb-10">
-                        <h3 className="text-5xl md:text-7xl font-black uppercase tracking-tighter">
-                            Agent <br /> <span className="text-game-red">Abilities</span>
-                        </h3>
-                        <div className="text-right font-mono text-sm text-game-gray mt-8 md:mt-0">
-                            // UPDATED: PATCH 7.02 <br />
-                            // REGION: GLOBAL
-                        </div>
-                    </div>
 
-                    <div className="grid md:grid-cols-3 gap-8 text-center">
-                        {[
-                            { icon: Zap, title: "Hyper Speed", desc: "Low latency inputs for competitive integrity." },
-                            { icon: Radio, title: "Global Comms", desc: "Real-time voice architecture integration." },
-                            { icon: Crosshair, title: "Pixel Perfect", desc: "128-tick servers as standard." }
-                        ].map((feat, i) => (
-                            <div key={i} className="group p-10 border border-white/10 hover:border-game-red transition-all cursor-pointer bg-white/5 hover:bg-white/10 relative overflow-hidden">
-                                <div className="absolute top-0 right-0 p-2 opacity-50">
-                                    <feat.icon className="w-12 h-12 text-white/10 group-hover:text-game-red/20 transition-colors" />
-                                </div>
-                                <div className="text-4xl font-black mb-4 group-hover:text-game-red transition-colors">0{i + 1}</div>
-                                <h4 className="text-xl font-bold uppercase mb-2">{feat.title}</h4>
-                                <p className="text-game-gray text-sm">{feat.desc}</p>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
 
             {/* FOOTER */}
             <footer className="py-20 px-6 bg-black text-center relative overflow-hidden">
@@ -391,7 +361,7 @@ export default function LandingPage() {
 
                 <div className="relative z-10">
                     <button className="px-12 py-6 bg-white text-black font-black text-2xl uppercase tracking-widest hover:bg-game-red hover:text-white transition-all clip-path-slant mb-12">
-                        Install Client
+                        DO HAVE FUN !!!
                     </button>
 
                     <div className="flex justify-center gap-8 font-mono text-sm text-game-gray uppercase">

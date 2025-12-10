@@ -61,14 +61,16 @@ public class UserController {
         double kd = deaths > 0 ? (double) kills / deaths : kills;
         stats.setKdRatio(String.format("%.2f", kd));
 
+        stats.setSnakeHighScore(user.getSnakeHighScore());
+        stats.setTotalXp(user.getTotalXp());
+
         return ResponseEntity.ok(stats);
     }
 
     @GetMapping("/leaderboard")
     public List<User> getLeaderboard() {
-        // Simple Top 50 by Wins mock
-        return userRepository.findAll().stream()
-                .sorted((u1, u2) -> Integer.compare(u2.getWins(), u1.getWins()))
+        // Top 50 by Total XP (Dynamic Ranking)
+        return userRepository.findAllByOrderByTotalXpDesc().stream()
                 .limit(50)
                 .toList();
     }

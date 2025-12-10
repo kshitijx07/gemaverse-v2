@@ -1,0 +1,75 @@
+package com.example.demo.controller;
+
+import com.example.demo.model.User;
+import com.example.demo.dto.DashboardStatsDTO;
+import com.example.demo.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+@RestController
+@RequestMapping("/api/users")
+@CrossOrigin(origins = "http://localhost:5173")
+public class UserController {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @GetMapping("/{username}")
+    public ResponseEntity<?> getUserProfile(@PathVariable String username) {
+        Optional<User> user = userRepository.findByUsername(username);
+        if (user.isPresent()) {
+            return ResponseEntity.ok(user.get());
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    @GetMapping("/{username}/stats")
+    public ResponseEntity<?> getUserDashboardStats(@PathVariable String username) {
+        Optional<User> userOpt = userRepository.findByUsername(username);
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        User user = userOpt.get();
+        DashboardStatsDTO stats = new DashboardStatsDTO();
+
+        // Basic Info
+        stats.setUsername(user.getUsername());
+        stats.setRankBadge(user.getRankBadge() != null ? user.getRankBadge() : "Unranked");
+        stats.setPlayTime(user.getPlayTime());
+
+        // Match Stats
+        int wins = user.getWins();
+        int losses = user.getLosses();
+        int total = wins + losses;
+
+        stats.setWins(wins);
+        stats.setLosses(losses);
+        stats.setTotalMatches(total);
+
+        // Calculations
+        double winRate = total > 0 ? (double) wins / total * 100 : 0.0;
+        stats.setWinRate(Math.round(winRate * 10.0) / 10.0); // Round to 1 decimal
+
+        int kills = user.getKills();
+        int deaths = user.getDeaths();
+        double kd = deaths > 0 ? (double) kills / deaths : kills;
+        stats.setKdRatio(String.format("%.2f", kd));
+
+        return ResponseEntity.ok(stats);
+    }
+
+    @GetMapping("/leaderboard")
+    public List<User> getLeaderboard() {
+        // Simple Top 50 by Wins mock
+        return userRepository.findAll().stream()
+                .sorted((u1, u2) -> Integer.compare(u2.getWins(), u1.getWins()))
+                .limit(50)
+                .toList();
+    }
+}

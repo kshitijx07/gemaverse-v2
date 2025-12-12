@@ -29,7 +29,9 @@ import {
     Activity,
     Crosshair,
     Shield,
-    Gamepad2
+    Gamepad2,
+    Volume2,
+    VolumeX
 } from 'lucide-react';
 import { useAudio } from '../context/AudioContext';
 
@@ -117,10 +119,13 @@ export default function Dashboard() {
     const [matches, setMatches] = useState([]); // New Match History
     const [loading, setLoading] = useState(true);
 
-    const { playHover, playClick } = useAudio();
+    const { playHover, playClick, startBGM, stopBGM, toggleMute, isMuted } = useAudio();
 
     // Fetch Stats & Matches
     useEffect(() => {
+        // Start Phonk BGM
+        startBGM('/assets/audio/dashboard.mp3');
+
         const fetchData = async () => {
             const storedUser = localStorage.getItem('username');
             if (!storedUser) {
@@ -150,6 +155,10 @@ export default function Dashboard() {
             }
         };
         fetchData();
+
+        return () => {
+            stopBGM();
+        };
     }, [navigate]);
 
     // Prepare Chart Data
@@ -282,6 +291,14 @@ export default function Dashboard() {
                         </button>
                     ))}
                 </nav>
+
+                <button
+                    onClick={toggleMute}
+                    className="hud-element mb-6 text-gray-400 hover:text-[#FF4655] transition-colors"
+                    title={isMuted ? "Unmute" : "Mute"}
+                >
+                    {isMuted ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
+                </button>
 
                 <button onClick={handleLogout} className="hud-element mb-10 text-gray-400 hover:text-[#FF4655] transition-colors">
                     <LogOut className="w-6 h-6" />

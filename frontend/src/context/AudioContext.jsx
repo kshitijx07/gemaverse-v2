@@ -152,6 +152,95 @@ export const AudioProvider = ({ children }) => {
         playTone(1200, 'square', 0.1, 0.1);
     };
 
+    // --- BACKGROUND MUSIC (BGM) ---
+    const bgmSourceRef = useRef(null);
+    const bgmGainRef = useRef(null);
+    const bgmRequestIdRef = useRef(0); // Generation ID to handle async races
+
+    const startBGM = async (trackPath) => {
+        try {
+            // Stop existing IMMEDIATELY (Simulate reload behavior)
+            // This increments the generation ID, cancelling any previous pending loads
+            stopBGM();
+
+            // NOW generate the new ID for this request
+            const currentId = ++bgmRequestIdRef.current;
+
+            if (!audioCtxRef.current) initAudio();
+            const ctx = audioCtxRef.current;
+
+            // Load Audio File
+            const response = await fetch(trackPath);
+            const arrayBuffer = await response.arrayBuffer();
+
+            // Check cancellation before decoding (long operation)
+            if (currentId !== bgmRequestIdRef.current) return;
+
+            const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+
+            // Check cancellation again
+            if (currentId !== bgmRequestIdRef.current) return;
+
+            // Create Nodes
+            const source = ctx.createBufferSource();
+            source.buffer = audioBuffer;
+            source.loop = true;
+
+            const gainNode = ctx.createGain();
+            gainNode.gain.value = 0; // Start silent for fade-in
+
+            // Connect
+            source.connect(gainNode).connect(masterGainRef.current);
+
+            // Start
+            source.start();
+
+            // Fade In
+            gainNode.gain.linearRampToValueAtTime(0.6, ctx.currentTime + 3);
+
+            // Store refs
+            bgmSourceRef.current = source;
+            bgmGainRef.current = gainNode;
+
+        } catch (e) {
+            console.error("Failed to start BGM:", e);
+        }
+    };
+
+    const stopBGM = () => {
+        try {
+            // Increment ID to cancel any pending loads
+            bgmRequestIdRef.current++;
+
+            // Capture current nodes
+            const source = bgmSourceRef.current;
+            const gain = bgmGainRef.current;
+
+            if (source && gain) {
+                const ctx = audioCtxRef.current;
+                const now = ctx?.currentTime || 0;
+
+                // INSTANT CUT (Per user request: "stop at moment we leave")
+                // No fade out, just hard stop to ensure no bleed over
+                try {
+                    gain.gain.cancelScheduledValues(now);
+                    gain.gain.setValueAtTime(0, now);
+                } catch (e) { }
+
+                try {
+                    source.stop();
+                    source.disconnect();
+                    gain.disconnect();
+                } catch (e) { }
+
+                bgmSourceRef.current = null;
+                bgmGainRef.current = null;
+            }
+        } catch (e) {
+            console.error("Failed to stop BGM:", e);
+        }
+    };
+
     const playLoginSuccess = () => {
         // SCIFI POWER UP SEQUENCE
         try {
@@ -198,8 +287,25 @@ export const AudioProvider = ({ children }) => {
         } catch (e) { }
     };
 
+    // --- MASTER MUTE ---
+    const [isMuted, setIsMuted] = React.useState(false);
+
+    const toggleMute = () => {
+        if (!audioCtxRef.current) initAudio();
+        const newState = !isMuted;
+        setIsMuted(newState);
+
+        if (masterGainRef.current) {
+            // Mute: 0, Unmute: 3.0 (Supercharged)
+            const targetGain = newState ? 0 : 3.0;
+            const ctx = audioCtxRef.current;
+            masterGainRef.current.gain.cancelScheduledValues(ctx.currentTime);
+            masterGainRef.current.gain.linearRampToValueAtTime(targetGain, ctx.currentTime + 0.1);
+        }
+    };
+
     return (
-        <AudioContext.Provider value={{ playHover, playClick, playSuccess, playError, playArcadePoint, playLoginSuccess }}>
+        <AudioContext.Provider value={{ playHover, playClick, playSuccess, playError, playArcadePoint, playLoginSuccess, startBGM, stopBGM, toggleMute, isMuted }}>
             {children}
         </AudioContext.Provider>
     );

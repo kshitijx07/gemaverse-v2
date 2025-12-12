@@ -17,7 +17,9 @@ import {
     MessageSquare,
     ArrowLeft,
     Crosshair,
-    Gamepad2
+    Gamepad2,
+    Volume2,
+    VolumeX
 } from 'lucide-react';
 import ChatRooms from '../components/ChatRooms';
 import RoomLobby from '../components/RoomLobby';
@@ -39,12 +41,20 @@ const Background3D = () => {
 };
 
 export default function ChatPage() {
-    const { playHover } = useAudio();
+    const { playHover, startBGM, stopBGM, toggleMute, isMuted } = useAudio();
     const navigate = useNavigate();
     const mainRef = useRef(null);
     const cursorRef = useRef(null);
     const [currentRoom, setCurrentRoom] = useState(null); // null = Lobby
     const [username, setUsername] = useState('Player_' + Math.floor(Math.random() * 1000));
+
+    useEffect(() => {
+        // Start Sci-Fi BGM on entry
+        startBGM('/assets/audio/bgm.mp3');
+        return () => {
+            stopBGM();
+        };
+    }, []);
 
     useEffect(() => {
         const initUser = async () => {
@@ -157,6 +167,14 @@ export default function ChatPage() {
                         </button>
                     ))}
                 </nav>
+
+                <button
+                    onClick={toggleMute}
+                    className="hud-element mb-6 text-gray-400 hover:text-[#FF4655] transition-colors"
+                    title={isMuted ? "Unmute" : "Mute"}
+                >
+                    {isMuted ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
+                </button>
 
                 <button onClick={handleLogout} onMouseEnter={playHover} className="hud-element mb-10 text-gray-400 hover:text-[#FF4655] transition-colors">
                     <LogOut className="w-6 h-6" />

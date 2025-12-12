@@ -1,4 +1,4 @@
-import React, { useState, useRef, useLayoutEffect } from 'react';
+import React, { useState, useRef, useLayoutEffect, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { gsap } from 'gsap';
 // --- 3D IMPORTS ---
@@ -19,7 +19,9 @@ import {
     Target,
     MessageSquare,
     LogOut,
-    Crosshair
+    Crosshair,
+    Volume2,
+    VolumeX
 } from 'lucide-react';
 
 // --- COMPONENT: 3D BACKGROUND (Digital Void) ---
@@ -39,12 +41,20 @@ const Background3D = () => {
 };
 
 export default function Matchmaking() {
-    const { playHover } = useAudio();
+    const { playHover, startBGM, stopBGM, toggleMute, isMuted } = useAudio();
     const navigate = useNavigate();
     const mainRef = useRef(null);
     const cursorRef = useRef(null);
     const [searching, setSearching] = useState(false);
     const [timer, setTimer] = useState(0);
+
+    useEffect(() => {
+        // Start Epic Cinematic BGM on entry
+        startBGM('/assets/audio/matchmaking.mp3');
+        return () => {
+            stopBGM();
+        };
+    }, []);
 
     const startQueue = () => {
         setSearching(true);
@@ -163,6 +173,14 @@ export default function Matchmaking() {
                         </button>
                     ))}
                 </nav>
+
+                <button
+                    onClick={toggleMute}
+                    className="hud-element mb-6 text-gray-400 hover:text-[#FF4655] transition-colors"
+                    title={isMuted ? "Unmute" : "Mute"}
+                >
+                    {isMuted ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
+                </button>
 
                 <button onClick={handleLogout} onMouseEnter={playHover} className="hud-element mb-10 text-gray-400 hover:text-[#FF4655] transition-colors">
                     <LogOut className="w-6 h-6" />

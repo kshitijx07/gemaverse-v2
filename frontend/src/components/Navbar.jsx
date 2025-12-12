@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Volume2, VolumeX } from 'lucide-react';
+import { useAudio } from '../context/AudioContext';
 
 const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false);
+    const { toggleMute, isMuted } = useAudio();
 
     return (
         <nav className="fixed top-0 left-0 w-full z-50 px-6 py-4 mix-blend-difference">
@@ -17,9 +19,16 @@ const Navbar = () => {
                     GAME<span className="text-game-red">VERSE</span>_HUD
                 </Link>
 
-
-
                 <div className="flex items-center gap-4">
+                    {/* AUDIO TOGGLE */}
+                    <button
+                        onClick={toggleMute}
+                        className="p-2 border border-white/20 hover:bg-game-red hover:text-black transition-all clip-path-slant text-white"
+                        title={isMuted ? "Unmute Audio" : "Stop All Audio"}
+                    >
+                        {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+                    </button>
+
                     <Link to="/login" className="px-6 py-2 border border-white/20 text-xs font-bold uppercase tracking-widest hover:bg-game-red hover:border-game-red hover:text-black transition-all clip-path-slant text-white">
                         Login_SYS
                     </Link>

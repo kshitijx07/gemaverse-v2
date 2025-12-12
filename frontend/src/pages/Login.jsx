@@ -4,7 +4,10 @@ import { gsap } from 'gsap';
 import { ArrowLeft, User, Lock, ArrowRight, AlertCircle, Crosshair, Shield, Hexagon } from 'lucide-react';
 import axios from 'axios';
 
+import { useAudio } from '../context/AudioContext';
+
 export default function Login() {
+    const { playLoginSuccess } = useAudio();
     const navigate = useNavigate();
     const containerRef = useRef(null);
     const formRef = useRef(null);
@@ -44,7 +47,6 @@ export default function Login() {
         setFormData({ ...formData, [e.target.name]: e.target.value });
         if (error) setError('');
     };
-
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -58,6 +60,7 @@ export default function Login() {
             if (response.status === 200) {
                 // Success - Store Session
                 localStorage.setItem('username', response.data.username);
+                playLoginSuccess();
 
                 // Glitch out
                 gsap.to(formRef.current, {

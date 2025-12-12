@@ -3,12 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { gsap } from 'gsap';
 import { ArrowLeft, Trophy, Activity, AlertTriangle } from 'lucide-react';
 import axios from 'axios';
+import { useAudio } from '../context/AudioContext';
 
 const GRID_SIZE = 20;
 const CELL_SIZE = 20; // Will be dynamic based on container
 const SPEED = 100;
 
 export default function SnakeGame() {
+    const { playArcadePoint, playError, playClick } = useAudio();
+
     const navigate = useNavigate();
     const canvasRef = useRef(null);
 
@@ -20,6 +23,8 @@ export default function SnakeGame() {
     const [highScore, setHighScore] = useState(0);
     const [gameOver, setGameOver] = useState(false);
     const [gameStarted, setGameStarted] = useState(false);
+
+
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState(null);
@@ -73,6 +78,7 @@ export default function SnakeGame() {
     }, []);
 
     const endGame = async () => {
+        playError();
         clearInterval(gameLoopRef.current);
         setGameOver(true);
         gameOverRef.current = true;
@@ -134,6 +140,7 @@ export default function SnakeGame() {
 
         // Food Check
         if (head.x === foodRef.current.x && head.y === foodRef.current.y) {
+            playArcadePoint();
             scoreRef.current += 10;
             setScore(scoreRef.current);
             // New Food

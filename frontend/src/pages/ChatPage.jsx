@@ -6,6 +6,7 @@ import axios from 'axios';
 import { Canvas } from '@react-three/fiber';
 import { Stars, Sparkles, Environment } from '@react-three/drei';
 // ------------------
+import { useAudio } from '../context/AudioContext';
 import {
     LayoutDashboard,
     Trophy,
@@ -38,6 +39,7 @@ const Background3D = () => {
 };
 
 export default function ChatPage() {
+    const { playHover } = useAudio();
     const navigate = useNavigate();
     const mainRef = useRef(null);
     const cursorRef = useRef(null);
@@ -147,6 +149,7 @@ export default function ChatPage() {
                         <button
                             key={i}
                             onClick={() => navigate(item.path)}
+                            onMouseEnter={playHover}
                             className={`hud-element group relative flex justify-center w-full py-2 hover:bg-white/5 transition-colors ${item.path === '/chat' ? 'border-r-2 border-[#FF4655]' : ''}`}
                         >
                             <item.icon className={`w-6 h-6 transition-colors duration-300 ${item.path === '/chat' ? 'text-[#FF4655]' : 'text-gray-400 group-hover:text-white'}`} />
@@ -155,7 +158,7 @@ export default function ChatPage() {
                     ))}
                 </nav>
 
-                <button onClick={handleLogout} className="hud-element mb-10 text-gray-400 hover:text-[#FF4655] transition-colors">
+                <button onClick={handleLogout} onMouseEnter={playHover} className="hud-element mb-10 text-gray-400 hover:text-[#FF4655] transition-colors">
                     <LogOut className="w-6 h-6" />
                 </button>
             </aside>

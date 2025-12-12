@@ -27,6 +27,7 @@ import {
     Shield,
     Gamepad2
 } from 'lucide-react';
+import { useAudio } from '../context/AudioContext';
 
 // --- COMPONENT: 3D RANK BADGE (Floating Core) ---
 const HolographicCore = ({ primaryColor = "#FF4655" }) => {
@@ -110,6 +111,8 @@ export default function Dashboard() {
     const cursorRef = useRef(null);
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
+
+    const { playHover, playClick } = useAudio();
 
     // Fetch Stats
     useEffect(() => {
@@ -228,9 +231,11 @@ export default function Dashboard() {
                         { icon: Users, path: '/profile' },
                         { icon: MessageSquare, path: '/chat' },
                     ].map((item, i) => (
+
                         <button
                             key={i}
-                            onClick={() => navigate(item.path)}
+                            onClick={() => { playClick(); navigate(item.path); }}
+                            onMouseEnter={playHover}
                             className={`hud-element group relative flex justify-center w-full py-2 hover:bg-white/5 transition-colors ${i === 0 ? 'border-r-2 border-[#FF4655]' : ''}`}
                         >
                             <item.icon className={`w-6 h-6 transition-colors duration-300 ${i === 0 ? 'text-[#FF4655]' : 'text-gray-400 group-hover:text-white'}`} />

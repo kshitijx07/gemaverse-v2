@@ -153,7 +153,23 @@ export default function Profile() {
     }, [loading]);
 
     const handleLogout = () => navigate('/login');
-    const toggleEdit = () => setIsEditing(!isEditing);
+
+    const toggleEdit = async () => {
+        if (isEditing) {
+            // Save logic
+            try {
+                const username = localStorage.getItem('username');
+                await axios.put(`/api/users/${username}/bio`, { bio: user.bio });
+                // Optional: Play success sound if context available
+                setIsEditing(false);
+            } catch (err) {
+                console.error("Failed to save bio", err);
+                alert("Failed to save bio. Please try again.");
+            }
+        } else {
+            setIsEditing(true);
+        }
+    };
 
     return (
         <div ref={mainRef} className="min-h-screen bg-[#0F1923] text-white font-sans overflow-hidden flex cursor-none selection:bg-[#FF4655] selection:text-black relative">

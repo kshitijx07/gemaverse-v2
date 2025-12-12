@@ -11,6 +11,7 @@ public class DashboardStatsDTO {
     private int playTime;
     private int snakeHighScore;
     private int totalXp;
+    private String bio;
 
     // Constructors
     public DashboardStatsDTO() {
@@ -95,5 +96,13 @@ public class DashboardStatsDTO {
 
     public void setTotalXp(int totalXp) {
         this.totalXp = totalXp;
+    }
+
+    public String getBio() {
+        return bio;
+    }
+
+    public void setBio(String bio) {
+        this.bio = bio;
     }
 }

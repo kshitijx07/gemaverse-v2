@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 // --- 3D IMPORTS ---
 import { Canvas } from '@react-three/fiber';
 import { Stars, Sparkles, Environment } from '@react-three/drei';
+import { useAudio } from '../context/AudioContext';
 // ------------------
 import {
     Star,
@@ -54,6 +55,26 @@ export default function GameReviews() {
 
     const [reviewText, setReviewText] = useState('');
     const [submitting, setSubmitting] = useState(false);
+    const [userId, setUserId] = useState(null); // Dynamic User ID
+    const { playHover } = useAudio();
+
+    // Fetch User ID
+    useEffect(() => {
+        const fetchUser = async () => {
+            const username = localStorage.getItem('username');
+            if (username) {
+                try {
+                    const res = await axios.get(`/api/users/${username}`);
+                    if (res.data && res.data.id) {
+                        setUserId(res.data.id);
+                    }
+                } catch (e) {
+                    console.error("Failed to fetch user ID for reviews", e);
+                }
+            }
+        };
+        fetchUser();
+    }, []);
 
     // --- DATA FETCHING ---
     useEffect(() => {
@@ -120,19 +141,22 @@ export default function GameReviews() {
         if (!selectedGame || !reviewText.trim()) return;
         setSubmitting(true);
         const username = localStorage.getItem('username') || 'Unknown Agent';
+        // Use real userId if available, else fallback to 1 (or handle error)
+        const authorId = userId || 1;
 
         try {
             const response = await axios.post(`/api/games/${selectedGame.id}/reviews`, {
-                username, userId: 1, rating: 5, comment: reviewText
+                username, userId: authorId, rating: 5, comment: reviewText
             });
             const created = response?.data ? response.data : { id: Date.now(), username, rating: 5, comment: reviewText, createdAt: new Date().toISOString() };
             setGameReviews((prev) => [created, ...prev]);
             alert('Report Submitted Successfully.');
             setReviewText('');
         } catch (err) {
+            console.error("Review submit failed", err);
             const mockReview = { id: Date.now(), username, rating: 5, comment: reviewText, createdAt: new Date().toISOString() };
             setGameReviews((prev) => [mockReview, ...prev]);
-            alert('Report Logged Locally.');
+            alert('Connection Unstable. Report Logged Locally.');
             setReviewText('');
         } finally {
             setSubmitting(false);
@@ -246,6 +270,7 @@ export default function GameReviews() {
                             onClick={() => navigate(item.path)}
                             className={`hud-element group relative flex justify-center w-full py-2 hover:bg-white/5 transition-colors ${item.path === '/reviews' ? 'border-r-2 border-[#FF4655]' : ''}`}
                             type="button"
+                            onMouseEnter={playHover}
                         >
                             <item.icon className={`w-6 h-6 transition-colors duration-300 ${item.path === '/reviews' ? 'text-[#FF4655]' : 'text-gray-400 group-hover:text-white'}`} />
                             {item.path !== '/reviews' && <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-1 bg-yellow-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />}
@@ -253,7 +278,7 @@ export default function GameReviews() {
                     ))}
                 </nav>
 
-                <button onClick={handleLogout} className="hud-element mb-10 text-gray-400 hover:text-[#FF4655] transition-colors" type="button">
+                <button onClick={handleLogout} onMouseEnter={playHover} className="hud-element mb-10 text-gray-400 hover:text-[#FF4655] transition-colors" type="button">
                     <LogOut className="w-6 h-6" />
                 </button>
             </aside>
@@ -280,6 +305,7 @@ export default function GameReviews() {
                         <div
                             key={game.id}
                             onClick={() => setSelectedGame(game)}
+                            onMouseEnter={playHover}
                             // Default opacity 1 in case JS fails, handled by GSAP normally
                             className="review-card interactive-card group bg-[#0F1923]/90 backdrop-blur-xl border border-white/10 overflow-hidden cursor-pointer hover:border-yellow-400 transition-all duration-300 clip-path-card relative z-10"
                         >
@@ -302,7 +328,7 @@ export default function GameReviews() {
                     ))}
 
                     {/* Add New Placeholder */}
-                    <div className="review-card interactive-card border-2 border-dashed border-white/10 flex flex-col items-center justify-center p-8 text-gray-500 hover:text-white hover:border-[#FF4655] cursor-pointer transition-all bg-[#0F1923]/50 hover:bg-[#0F1923] min-h-[300px] relative z-10">
+                    <div onMouseEnter={playHover} className="review-card interactive-card border-2 border-dashed border-white/10 flex flex-col items-center justify-center p-8 text-gray-500 hover:text-white hover:border-[#FF4655] cursor-pointer transition-all bg-[#0F1923]/50 hover:bg-[#0F1923] min-h-[300px] relative z-10">
                         <Plus className="w-12 h-12 mb-4 opacity-50 group-hover:opacity-100" />
                         <span className="font-bold uppercase tracking-widest font-mono">Submit New Log</span>
                     </div>

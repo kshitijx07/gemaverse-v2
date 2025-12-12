@@ -41,7 +41,10 @@ public class UserController {
         // Basic Info
         stats.setUsername(user.getUsername());
         stats.setRankBadge(user.getRankBadge() != null ? user.getRankBadge() : "Unranked");
+        stats.setUsername(user.getUsername());
+        stats.setRankBadge(user.getRankBadge() != null ? user.getRankBadge() : "Unranked");
         stats.setPlayTime(user.getPlayTime());
+        stats.setBio(user.getBio());
 
         // Match Stats
         int wins = user.getWins();
@@ -73,5 +76,26 @@ public class UserController {
         return userRepository.findAllByOrderByTotalXpDesc().stream()
                 .limit(50)
                 .toList();
+    }
+
+    @PutMapping("/{username}/bio")
+    public ResponseEntity<?> updateUserBio(@PathVariable String username, @RequestBody Map<String, String> payload) {
+        Optional<User> userOpt = userRepository.findByUsername(username);
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        User user = userOpt.get();
+        String newBio = payload.get("bio");
+        if (newBio != null) {
+            // Limit bio length just in case
+            if (newBio.length() > 500) {
+                newBio = newBio.substring(0, 500);
+            }
+            user.setBio(newBio);
+            userRepository.save(user);
+            return ResponseEntity.ok(Map.of("message", "Bio updated successfully", "bio", newBio));
+        }
+        return ResponseEntity.badRequest().body("Bio cannot be null");
     }
 }

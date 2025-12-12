@@ -20,7 +20,30 @@ export default function SnakeGame() {
     const [highScore, setHighScore] = useState(0);
     const [gameOver, setGameOver] = useState(false);
     const [gameStarted, setGameStarted] = useState(false);
+
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submitError, setSubmitError] = useState(null);
+
+    // Fetch High Score
+    useEffect(() => {
+        let username = localStorage.getItem('username');
+        if (!username) {
+            // Optional: Redirect to login or show guest mode warning
+            // navigate('/login');
+            return;
+        }
+        username = username.trim();
+
+        const fetchStats = async () => {
+            try {
+                const res = await axios.get(`/api/users/${username}/stats`);
+                setHighScore(res.data.snakeHighScore || 0);
+            } catch (e) {
+                console.error("Failed to fetch stats", e);
+            }
+        };
+        fetchStats();
+    }, [navigate]);
 
     // Refs for mutable state in the loop
     const snakeRef = useRef(snake);
@@ -56,21 +79,35 @@ export default function SnakeGame() {
         setGameStarted(false);
 
         // Submit Score
-        const username = localStorage.getItem('username');
-        if (username) {
-            setIsSubmitting(true);
-            try {
-                await axios.post('/api/games/submit', {
-                    username,
-                    game: 'SNAKE',
-                    score: scoreRef.current,
-                    result: 'COMPLETED'
-                });
-            } catch (e) {
-                console.error("Score submission failed", e);
-            } finally {
-                setIsSubmitting(false);
+        let username = localStorage.getItem('username');
+        if (!username) {
+            setSubmitError("GUEST MODE - SCORE NOT SAVED");
+            return;
+        }
+        username = username.trim();
+
+        setIsSubmitting(true);
+        try {
+            console.log("Submitting score for", username, scoreRef.current);
+            const res = await axios.post('/api/games/submit', {
+                username,
+                game: 'SNAKE',
+                score: scoreRef.current,
+                result: 'COMPLETED'
+            });
+
+            // Backend returns Update User object
+            if (res.data) {
+                // If the new score is higher, backend updates it. 
+                // We rely on backend response for the high score.
+                const newHigh = res.data.snakeHighScore !== undefined ? res.data.snakeHighScore : highScore;
+                setHighScore(newHigh);
             }
+        } catch (e) {
+            console.error("Score submission failed", e);
+            setSubmitError("CONNECTION LOST // SCORE PACKET DROPPED");
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -191,6 +228,7 @@ export default function SnakeGame() {
                 <div className="bg-game-red/10 border border-game-red/50 px-6 py-2 clip-path-slant flex flex-col items-end">
                     <div className="text-[10px] text-game-gray uppercase tracking-widest">Score Data</div>
                     <div className="text-2xl font-bold text-game-yellow">{score}</div>
+                    <div className="text-[10px] text-game-red font-bold">MAX: {highScore}</div>
                 </div>
             </div>
 
@@ -226,6 +264,8 @@ export default function SnakeGame() {
 
                             {isSubmitting ? (
                                 <div className="text-xs text-white tracking-widest animate-pulse">UPLOADING TO MAINFRAME...</div>
+                            ) : submitError ? (
+                                <div className="text-xs text-red-500 tracking-widest font-bold mb-4">{submitError}</div>
                             ) : (
                                 <button
                                     onClick={initGame}

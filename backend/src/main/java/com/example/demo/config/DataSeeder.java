@@ -18,7 +18,8 @@ public class DataSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        // seedUser("kshitij", "752005", "kshitij@gameverse.com");
+        seedUser("kshitij", "752005", "kshitij@gameverse.com");
+        seedUser("SHIVAM", "password", "shivam@gameverse.com");
     }
 
     private void seedUser(String username, String rawPassword, String email) {

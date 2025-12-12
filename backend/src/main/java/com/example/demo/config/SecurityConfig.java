@@ -26,7 +26,8 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Use the bean below
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/api/status", "/api/users/**", "/ws/**", "/api/chat/**")
+                        .requestMatchers("/api/auth/**", "/api/status", "/api/users/**", "/ws/**", "/api/chat/**",
+                                "/api/games/**", "/api/matches/**")
                         .permitAll()
                         .anyRequest().authenticated());
         return http.build();
@@ -35,7 +36,8 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173")); // Allow Frontend
+        configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:5174")); // Allow Frontend
+                                                                                                    // ports
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);

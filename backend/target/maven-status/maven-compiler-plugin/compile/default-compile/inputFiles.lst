@@ -13,7 +13,7 @@ C:\Users\kshit\Desktop\gaming site\backend\src\main\java\com\example\demo\dto\Da
 C:\Users\kshit\Desktop\gaming site\backend\src\main\java\com\example\demo\model\ChatMessage.java
 C:\Users\kshit\Desktop\gaming site\backend\src\main\java\com\example\demo\model\ChatRoom.java
 C:\Users\kshit\Desktop\gaming site\backend\src\main\java\com\example\demo\model\Game.java
-C:\Users\kshit\Desktop\gaming site\backend\src\main\java\com\example\demo\model\MatchHistory.java
+C:\Users\kshit\Desktop\gaming site\backend\src\main\java\com\example\demo\model\Match.java
 C:\Users\kshit\Desktop\gaming site\backend\src\main\java\com\example\demo\model\Review.java
 C:\Users\kshit\Desktop\gaming site\backend\src\main\java\com\example\demo\model\User.java
 C:\Users\kshit\Desktop\gaming site\backend\src\main\java\com\example\demo\repository\GameRepository.java
@@ -21,3 +21,4 @@ C:\Users\kshit\Desktop\gaming site\backend\src\main\java\com\example\demo\reposi
 C:\Users\kshit\Desktop\gaming site\backend\src\main\java\com\example\demo\repository\ReviewRepository.java
 C:\Users\kshit\Desktop\gaming site\backend\src\main\java\com\example\demo\repository\UserRepository.java
 C:\Users\kshit\Desktop\gaming site\backend\src\main\java\com\example\demo\service\AuthService.java
+C:\Users\kshit\Desktop\gaming site\backend\src\main\java\com\example\demo\service\ChatRoomService.java

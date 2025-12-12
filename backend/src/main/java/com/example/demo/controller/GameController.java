@@ -25,6 +25,9 @@ public class GameController {
     @Autowired
     private com.example.demo.repository.UserRepository userRepository;
 
+    @Autowired
+    private com.example.demo.repository.MatchRepository matchRepository;
+
     @GetMapping
     public List<Game> getAllGames() {
         return gameRepository.findAll();
@@ -122,6 +125,10 @@ public class GameController {
         }
 
         userRepository.save(user);
+
+        // Record Match History
+        com.example.demo.model.Match match = new com.example.demo.model.Match(user, game.toUpperCase(), score, result);
+        matchRepository.save(match);
 
         return ResponseEntity.ok(user); // Return updated user stats
     }

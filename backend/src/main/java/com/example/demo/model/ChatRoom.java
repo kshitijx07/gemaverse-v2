@@ -67,4 +67,8 @@ public class ChatRoom {
     public void removeMember(String username) {
         members.remove(username);
     }
+
+    public java.util.Set<String> getMembers() {
+        return members;
+    }
 }

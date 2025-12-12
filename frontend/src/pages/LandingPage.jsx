@@ -263,13 +263,13 @@ export default function LandingPage() {
                 <div className="relative z-10 text-center px-6">
                     <div className="overflow-hidden">
                         <h1 className="hero-glitch text-[12vw] leading-[0.85] font-black uppercase tracking-[-0.05em] font-mono text-transparent bg-clip-text bg-gradient-to-br from-white via-white to-gray-500 hover:text-game-red transition-colors duration-300 select-none">
-                            Defy The <br /> <span className="text-stroke-2">Limits</span>
+                            Master The <br /> <span className="text-stroke-2">Grid</span>
                         </h1>
                     </div>
 
                     <div className="mt-8 flex flex-col items-center gap-6">
                         <p className="font-mono text-game-red tracking-[0.2em] text-sm md:text-base animate-pulse">
-                            /// NEXT-GEN ENGINE DETECTED_
+                            /// TACTICAL GAMING TERMINAL ONLINE_
                         </p>
                         <button className="group relative px-10 py-4 bg-game-red text-black font-bold uppercase tracking-widest clip-path-slant hover:bg-game-yellow transition-colors overflow-hidden">
                             <span className="relative z-10">Initiate Protocol</span>
@@ -293,13 +293,13 @@ export default function LandingPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center w-full max-w-[1600px]">
                         <div className="order-2 md:order-1">
                             <h2 className="text-6xl md:text-8xl font-black uppercase mb-4 text-white">
-                                Top <span className="text-game-red">Frags</span>
+                                Snake <span className="text-game-red">Protocol</span>
                             </h2>
                             <p className="text-xl text-game-gray max-w-lg mb-8">
-                                Precision gunplay meets unique agent abilities. Experience the tactical shooter that changed the landscape.
+                                Navigate the infinite grid. Consume, grow, survive. The classic challenge reimagined for the elite.
                             </p>
                             <div className="font-mono text-xs text-game-yellow">
-                                PROJECT: VALORANT_CLIPS // STATUS: RECORDED
+                                MODULE: SNAKE // STATUS: ACTIVE
                             </div>
                         </div>
                         <div className="order-1 md:order-2 h-[50vh] bg-black relative border-2 border-white/20 p-2">
@@ -321,14 +321,14 @@ export default function LandingPage() {
                                 alt="Cyberpunk City"
                                 className="w-full h-full object-cover"
                             />
-                            <div className="absolute top-4 right-4 bg-game-yellow text-black text-xs font-bold px-2 py-1">LIVE FEED</div>
+                            <div className="absolute top-4 right-4 bg-game-yellow text-black text-xs font-bold px-2 py-1">AI ACTIVE</div>
                         </div>
                         <div>
                             <h2 className="text-6xl md:text-8xl font-black uppercase mb-4 text-game-yellow">
-                                Night <span className="text-white">City</span>
+                                Siege <span className="text-white">Engine</span>
                             </h2>
                             <p className="text-xl text-game-gray max-w-lg mb-8">
-                                A high-fidelity open world experience. Immerse yourself in the neon-drenched streets of the future.
+                                Strategic warfare on a 3x3 matrix. Defeat the adaptive AI or challenge rival agents.
                             </p>
                         </div>
                     </div>
@@ -341,17 +341,47 @@ export default function LandingPage() {
                             <Cpu className="w-24 h-24 text-black animate-spin-slow" />
                         </div>
                         <h2 className="text-[10vw] font-black uppercase text-black leading-none">
-                            System <br /> Override
+                            Ranked <br /> Warfare
                         </h2>
                         <p className="text-2xl text-black font-bold mt-8">
-                            VR Interface Loading...
+                            Climb the leaderboard. Secure your legacy.
                         </p>
                     </div>
                 </div>
 
             </section>
 
+            {/* NEXT GEN ENGINE (Features) */}
+            <section className="py-32 px-6 bg-game-dark border-t border-white/10 relative z-10">
+                <div className="max-w-[1400px] mx-auto">
+                    <div className="flex flex-col md:flex-row justify-between items-end mb-20 border-b border-white/10 pb-10">
+                        <h3 className="text-5xl md:text-7xl font-black uppercase tracking-tighter">
+                            Agent <br /> <span className="text-game-red">Abilities</span>
+                        </h3>
+                        <div className="text-right font-mono text-sm text-game-gray mt-8 md:mt-0">
+                            // UPDATED: PATCH 7.02 <br />
+                            // REGION: GLOBAL
+                        </div>
+                    </div>
 
+                    <div className="grid md:grid-cols-3 gap-8 text-center">
+                        {[
+                            { icon: Zap, title: "Hyper Speed", desc: "Low latency inputs for competitive integrity." },
+                            { icon: Radio, title: "Global Comms", desc: "Real-time voice architecture integration." },
+                            { icon: Crosshair, title: "Pixel Perfect", desc: "128-tick servers as standard." }
+                        ].map((feat, i) => (
+                            <div key={i} className="group p-10 border border-white/10 hover:border-game-red transition-all cursor-pointer bg-white/5 hover:bg-white/10 relative overflow-hidden">
+                                <div className="absolute top-0 right-0 p-2 opacity-50">
+                                    <feat.icon className="w-12 h-12 text-white/10 group-hover:text-game-red/20 transition-colors" />
+                                </div>
+                                <div className="text-4xl font-black mb-4 group-hover:text-game-red transition-colors">0{i + 1}</div>
+                                <h4 className="text-xl font-bold uppercase mb-2">{feat.title}</h4>
+                                <p className="text-game-gray text-sm">{feat.desc}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
 
             {/* FOOTER */}
             <footer className="py-20 px-6 bg-black text-center relative overflow-hidden">

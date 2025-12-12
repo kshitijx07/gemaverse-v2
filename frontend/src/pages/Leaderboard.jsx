@@ -1,77 +1,273 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useLayoutEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Trophy, Medal, Crown } from 'lucide-react';
+import { gsap } from 'gsap';
+// --- 3D IMPORTS ---
+import { Canvas } from '@react-three/fiber';
+import { Stars, Sparkles, Environment } from '@react-three/drei';
+// ------------------
+import {
+    Trophy,
+    Medal,
+    Crown,
+    LayoutDashboard,
+    Users,
+    LogOut,
+    Sword,
+    Target,
+    MessageSquare,
+    Gamepad2,
+    Crosshair,
+    Shield
+} from 'lucide-react';
+
+// --- COMPONENT: 3D BACKGROUND (FIXED VISIBILITY) ---
+const Background3D = () => {
+    return (
+        // FIXED: z-[-1] ensures it stays behind all content
+        <div className="fixed inset-0 z-[-1] pointer-events-none bg-[#0F1923]">
+            <Canvas camera={{ position: [0, 0, 1] }} gl={{ alpha: true }}>
+                {/* Fog helps blend the stars into the distance */}
+                <fog attach="fog" args={['#0F1923', 5, 20]} />
+
+                <Stars radius={50} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
+                <Sparkles count={50} scale={[12, 12, 10]} size={6} speed={0.4} opacity={0.5} color="#FF4655" />
+                <Sparkles count={100} scale={[20, 20, 10]} size={2} speed={0.2} opacity={0.2} color="#ffffff" />
+                <Environment preset="night" />
+            </Canvas>
+        </div>
+    );
+};
 
 export default function Leaderboard() {
+    const navigate = useNavigate();
+    const mainRef = useRef(null);
+    const cursorRef = useRef(null);
     const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    // Data Fetch
+    // --- DATA FETCHING ---
     useEffect(() => {
         axios.get('/api/users/leaderboard')
-            .then(res => setUsers(res.data))
+            .then(res => {
+                setUsers(res.data);
+                setLoading(false);
+            })
             .catch(err => {
                 console.error("Leaderboard fetch failed", err);
                 // Fallback mock
-                const mockUsers = Array.from({ length: 10 }).map((_, i) => ({
+                const mockUsers = Array.from({ length: 15 }).map((_, i) => ({
                     id: i,
-                    username: `Player_${i + 1}`,
-                    rankBadge: 'Unknown',
-                    wins: 0,
-                    snakeHighScore: 0,
-                    winRate: 0
+                    username: `AGENT_${100 + i}`,
+                    rankBadge: i < 3 ? 'RADIANT' : i < 8 ? 'IMMORTAL' : 'DIAMOND',
+                    wins: Math.floor(Math.random() * 50) + 10,
+                    losses: Math.floor(Math.random() * 20),
+                    snakeHighScore: Math.floor(Math.random() * 5000) + 1000,
+                    totalXp: Math.floor(Math.random() * 100000) + 50000,
+                    avatarColor: ['#FF4655', '#FCE300', '#00E0B8'][i % 3]
                 }));
                 setUsers(mockUsers);
+                setLoading(false);
             });
     }, []);
 
-    // Helper to calculate win rate if needed (User model might not send it pre-calculated in getLeaderboard list, 
-    // UserController returns raw User entities. User entity doesn't have winRate field.
-    // I need to calculate it on the fly: wins / (wins + losses) * 100).
+    // --- ANIMATIONS & CURSOR ---
+    useLayoutEffect(() => {
+        if (loading) return;
+
+        const cursor = cursorRef.current;
+        const hasCursor = !!cursor;
+
+        const moveCursor = (e) => {
+            if (hasCursor) gsap.to(cursor, { x: e.clientX, y: e.clientY, duration: 0.1, ease: 'power2.out' });
+        };
+
+        window.addEventListener('mousemove', moveCursor);
+
+        const ctx = gsap.context(() => {
+            // Sidebar Entrance
+            gsap.fromTo('.hud-element',
+                { x: -20, opacity: 0 },
+                { x: 0, opacity: 1, duration: 1.2, stagger: 0.1, ease: 'power3.out' }
+            );
+
+            // Header Entrance
+            gsap.fromTo('.header-content',
+                { y: -50, opacity: 0 },
+                { y: 0, opacity: 1, duration: 1, ease: 'power4.out', delay: 0.2 }
+            );
+
+            // Table Rows Stagger (Using fromTo for reliability)
+            gsap.fromTo('.leaderboard-row',
+                { x: 50, opacity: 0 },
+                {
+                    x: 0,
+                    opacity: 1,
+                    duration: 0.6,
+                    stagger: 0.05,
+                    ease: 'power2.out',
+                    delay: 0.5
+                }
+            );
+
+        }, mainRef);
+
+        return () => {
+            ctx.revert();
+            window.removeEventListener('mousemove', moveCursor);
+        };
+    }, [loading]);
+
     const getWinRate = (user) => {
         const total = (user.wins || 0) + (user.losses || 0);
         return total > 0 ? Math.round((user.wins / total) * 100) + '%' : '0%';
     };
 
+    const handleLogout = () => navigate('/login');
+
     return (
-        <div className="min-h-screen bg-game-dark text-white p-8 pt-24 font-sans">
-            <div className="max-w-6xl mx-auto">
-                <div className="flex items-end justify-between mb-12 border-b border-white/10 pb-6">
-                    <div>
-                        <h1 className="text-5xl font-black uppercase tracking-tighter mb-2">Global <span className="text-game-yellow">Rankings</span></h1>
-                        <p className="text-game-gray font-mono">SEASON 4 // EPISODE 2</p>
-                    </div>
-                    <Trophy className="w-16 h-16 text-game-yellow opacity-20" />
-                </div>
+        <div ref={mainRef} className="min-h-screen bg-[#0F1923] text-white font-sans overflow-hidden flex cursor-none selection:bg-[#FF4655] selection:text-black relative">
 
-                <div className="bg-[#0F1923] border border-white/10">
-                    {/* Header */}
-                    <div className="grid grid-cols-12 p-4 text-xs font-bold uppercase tracking-widest text-game-gray border-b border-white/10">
-                        <div className="col-span-1 text-center">#</div>
-                        <div className="col-span-4">Agent</div>
-                        <div className="col-span-2 text-center">Rank</div>
-                        <div className="col-span-1 text-center text-game-yellow">XP</div>
-                        <div className="col-span-2 text-center text-game-red">Snake HS</div>
-                        <div className="col-span-2 text-center">Win %</div>
-                    </div>
+            {/* --- 3D BACKGROUND (Z-Index Fixed) --- */}
+            <Background3D />
 
-                    {/* Rows */}
-                    {users.map((user, i) => (
-                        <div key={user.id} className="grid grid-cols-12 p-6 items-center hover:bg-white/5 transition-colors border-b border-white/5 group">
-                            <div className="col-span-1 text-center font-black text-lg text-game-gray group-hover:text-white">
-                                {i === 0 ? <Crown className="w-6 h-6 text-game-yellow mx-auto" /> : i + 1}
-                            </div>
-                            <div className="col-span-4 flex items-center gap-4">
-                                <div className="w-10 h-10 bg-gray-800 rounded-full border border-white/10" />
-                                <span className="font-bold text-lg">{user.username}</span>
-                            </div>
-                            <div className="col-span-2 text-center text-sm font-bold text-game-red">{user.rankBadge || user.rank || 'Unranked'}</div>
-                            <div className="col-span-1 text-center font-mono text-lg text-game-yellow">{user.totalXp || 0}</div>
-                            <div className="col-span-2 text-center font-mono text-game-red font-bold">{user.snakeHighScore || 0}</div>
-                            <div className="col-span-2 text-center font-mono text-green-400">{getWinRate(user)}</div>
-                        </div>
-                    ))}
-                </div>
+            {/* CROSSHAIR CURSOR */}
+            <div ref={cursorRef} className="fixed top-0 left-0 w-8 h-8 pointer-events-none z-[9999] -translate-x-1/2 -translate-y-1/2 border-2 border-[#FF4655] bg-transparent rounded-full mix-blend-difference flex items-center justify-center">
+                <div className="w-1 h-1 bg-[#FF4655] rounded-full" />
             </div>
+
+            {/* SIDEBAR HUD */}
+            <aside className="w-24 border-r border-white/10 flex flex-col items-center py-10 z-50 bg-[#0F1923]/80 backdrop-blur-md relative">
+                <div className="absolute top-0 right-0 w-1 h-full bg-[#FF4655]/50 scale-y-0 hover:scale-y-100 transition-transform origin-top" />
+
+                <div className="mb-20 hud-element">
+                    <div className="w-12 h-12 border-2 border-[#FF4655] flex items-center justify-center relative group cursor-pointer">
+                        <div className="absolute inset-0 bg-[#FF4655] opacity-0 group-hover:opacity-20 transition-opacity" />
+                        <Crosshair className="w-6 h-6 text-white group-hover:rotate-90 transition-transform duration-500" />
+                    </div>
+                </div>
+
+                <nav className="flex-1 flex flex-col gap-10 w-full">
+                    {[
+                        { icon: LayoutDashboard, path: '/dashboard' },
+                        { icon: Gamepad2, path: '/games' },
+                        { icon: Sword, path: '/matchmaking' },
+                        { icon: Trophy, path: '/leaderboard' },
+                        { icon: Target, path: '/reviews' },
+                        { icon: Users, path: '/profile' },
+                        { icon: MessageSquare, path: '/chat' },
+                    ].map((item, i) => (
+                        <button
+                            key={i}
+                            onClick={() => navigate(item.path)}
+                            className={`hud-element group relative flex justify-center w-full py-2 hover:bg-white/5 transition-colors ${item.path === '/leaderboard' ? 'border-r-2 border-[#FF4655]' : ''}`}
+                        >
+                            <item.icon className={`w-6 h-6 transition-colors duration-300 ${item.path === '/leaderboard' ? 'text-[#FF4655]' : 'text-gray-400 group-hover:text-white'}`} />
+                            {item.path !== '/leaderboard' && <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-1 bg-yellow-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />}
+                        </button>
+                    ))}
+                </nav>
+
+                <button onClick={handleLogout} className="hud-element mb-10 text-gray-400 hover:text-[#FF4655] transition-colors">
+                    <LogOut className="w-6 h-6" />
+                </button>
+            </aside>
+
+            {/* MAIN CONTENT (Z-10 ensures it's above background) */}
+            <main className="flex-1 relative overflow-y-auto p-10 lg:p-20 z-10 scrollbar-hide">
+                <div className="max-w-6xl mx-auto">
+
+                    {/* Header */}
+                    <div className="flex items-end justify-between mb-12 border-b border-white/10 pb-6 header-content">
+                        <div>
+                            <div className="text-xs text-[#FF4655] font-mono tracking-[0.2em] mb-2 flex items-center gap-2">
+                                <Trophy className="w-4 h-4" /> GLOBAL RANKINGS
+                            </div>
+                            <h1 className="text-6xl font-black uppercase tracking-tighter mb-2">
+                                TOP <span className="text-stroke-red">AGENTS</span>
+                            </h1>
+                            <p className="text-gray-400 font-mono text-sm">SEASON 4 // EPISODE 2</p>
+                        </div>
+                        <div className="hidden md:block text-right">
+                            <div className="text-2xl font-bold font-mono text-yellow-400">STATUS: ACTIVE</div>
+                            <div className="text-xs text-gray-400 tracking-widest">UPDATING LIVE</div>
+                        </div>
+                    </div>
+
+                    {/* Leaderboard Table */}
+                    <div className="bg-[#0F1923]/60 backdrop-blur-md border border-white/10 relative overflow-hidden clip-path-slant">
+                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#FF4655] to-transparent" />
+
+                        {/* Table Header */}
+                        <div className="grid grid-cols-12 p-5 text-xs font-bold uppercase tracking-widest text-gray-400 border-b border-white/10 bg-black/20">
+                            <div className="col-span-1 text-center">#</div>
+                            <div className="col-span-4">Agent</div>
+                            <div className="col-span-2 text-center">Rank</div>
+                            <div className="col-span-1 text-center text-yellow-400">XP</div>
+                            <div className="col-span-2 text-center text-[#FF4655]">Snake HS</div>
+                            <div className="col-span-2 text-center">Win %</div>
+                        </div>
+
+                        {/* Table Rows */}
+                        <div className="max-h-[60vh] overflow-y-auto">
+                            {users.map((user, i) => (
+                                <div key={user.id} className="leaderboard-row grid grid-cols-12 p-6 items-center hover:bg-white/5 transition-all duration-300 border-b border-white/5 group cursor-default relative">
+                                    {/* Hover Highlight */}
+                                    <div className="absolute left-0 top-0 h-full w-1 bg-[#FF4655] opacity-0 group-hover:opacity-100 transition-opacity" />
+
+                                    {/* Rank Number */}
+                                    <div className="col-span-1 text-center font-black text-xl text-gray-500 group-hover:text-white">
+                                        {i === 0 ? <Crown className="w-6 h-6 text-yellow-400 mx-auto animate-bounce-slow" /> :
+                                            i === 1 ? <Medal className="w-6 h-6 text-gray-300 mx-auto" /> :
+                                                i === 2 ? <Medal className="w-6 h-6 text-orange-400 mx-auto" /> :
+                                                    `0${i + 1}`}
+                                    </div>
+
+                                    {/* User Info */}
+                                    <div className="col-span-4 flex items-center gap-4">
+                                        <div className="relative">
+                                            <div className="w-10 h-10 bg-gray-800 rounded-sm border border-white/10 group-hover:border-[#FF4655] transition-colors" />
+                                            <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundColor: user.avatarColor || '#333' }} />
+                                        </div>
+                                        <span className="font-bold text-lg tracking-wide group-hover:text-[#FF4655] transition-colors">{user.username}</span>
+                                    </div>
+
+                                    {/* Rank Badge */}
+                                    <div className="col-span-2 text-center flex justify-center items-center gap-2">
+                                        <Shield className={`w-4 h-4 ${i < 3 ? 'text-yellow-400' : 'text-gray-500'}`} />
+                                        <span className="text-sm font-bold text-gray-300 group-hover:text-white">{user.rankBadge || 'Unranked'}</span>
+                                    </div>
+
+                                    {/* Stats */}
+                                    <div className="col-span-1 text-center font-mono text-lg text-yellow-400 group-hover:scale-110 transition-transform">{user.totalXp?.toLocaleString() || 0}</div>
+                                    <div className="col-span-2 text-center font-mono text-[#FF4655] font-bold">{user.snakeHighScore?.toLocaleString() || 0}</div>
+                                    <div className="col-span-2 text-center font-mono text-green-400">{getWinRate(user)}</div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <style>{`
+                .clip-path-slant {
+                    clip-path: polygon(
+                        0 0, 100% 0, 
+                        100% calc(100% - 20px), calc(100% - 20px) 100%, 
+                        0 100%
+                    );
+                }
+                .text-stroke-red {
+                    -webkit-text-stroke: 1px #FF4655;
+                    color: transparent;
+                }
+                .scrollbar-hide::-webkit-scrollbar {
+                    display: none;
+                }
+                .animate-bounce-slow {
+                    animation: bounce 3s infinite;
+                }
+            `}</style>
         </div>
     );
 }

@@ -1,6 +1,10 @@
-import React, { useRef, useEffect, useLayoutEffect } from 'react';
+import React, { useRef, useLayoutEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { gsap } from 'gsap';
+// --- 3D IMPORTS ---
+import { Canvas } from '@react-three/fiber';
+import { Stars, Sparkles, Environment } from '@react-three/drei';
+// ------------------
 import {
     LayoutDashboard,
     Trophy,
@@ -13,6 +17,22 @@ import {
     Play,
     Crosshair
 } from 'lucide-react';
+
+// --- COMPONENT: 3D BACKGROUND (Digital Void) ---
+const Background3D = () => {
+    return (
+        <div className="absolute inset-0 z-0 pointer-events-none">
+            <Canvas camera={{ position: [0, 0, 1] }}>
+                <color attach="background" args={['#0F1923']} />
+                <fog attach="fog" args={['#0F1923', 5, 20]} />
+                <Stars radius={50} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
+                <Sparkles count={50} scale={[12, 12, 10]} size={6} speed={0.4} opacity={0.5} color="#FF4655" />
+                <Sparkles count={100} scale={[20, 20, 10]} size={2} speed={0.2} opacity={0.2} color="#ffffff" />
+                <Environment preset="night" />
+            </Canvas>
+        </div>
+    );
+};
 
 export default function GamesPage() {
     const navigate = useNavigate();
@@ -35,6 +55,7 @@ export default function GamesPage() {
         });
 
         const ctx = gsap.context(() => {
+            // Sidebar Entrance
             gsap.from('.hud-element', {
                 x: -20,
                 opacity: 0,
@@ -43,6 +64,7 @@ export default function GamesPage() {
                 ease: 'power3.out'
             });
 
+            // Card Entrance
             gsap.fromTo('.game-card',
                 { y: 50, opacity: 0 },
                 {
@@ -54,6 +76,16 @@ export default function GamesPage() {
                     delay: 0.5
                 }
             );
+
+            // Text Entrance
+            gsap.from('.header-text', {
+                y: 20,
+                opacity: 0,
+                duration: 1,
+                ease: 'power4.out',
+                delay: 0.2
+            });
+
         }, mainRef);
 
         return () => {
@@ -66,7 +98,10 @@ export default function GamesPage() {
         };
     }, []);
 
-    const handleLogout = () => navigate('/login');
+    const handleLogout = () => {
+        localStorage.removeItem('username');
+        navigate('/login');
+    };
 
     const games = [
         {
@@ -74,7 +109,7 @@ export default function GamesPage() {
             title: 'SNAKE PROTOCOL',
             desc: 'Navigate the grid. Consume data packets. Avoid termination.',
             path: '/games/snake',
-            image: 'https://images.unsplash.com/photo-1614726365723-49cfa385a494?w=800&q=80', // Replace with generated/better image later
+            image: 'https://images.unsplash.com/photo-1614726365723-49cfa385a494?w=800&q=80',
             stats: 'HIGH SCORE TRACKED'
         },
         {
@@ -88,25 +123,23 @@ export default function GamesPage() {
     ];
 
     return (
-        <div ref={mainRef} className="min-h-screen bg-game-dark text-white font-sans overflow-hidden flex cursor-none selection:bg-game-red selection:text-black">
+        <div ref={mainRef} className="min-h-screen bg-[#0F1923] text-white font-sans overflow-hidden flex cursor-none selection:bg-[#FF4655] selection:text-black relative">
+
+            {/* --- 3D BACKGROUND --- */}
+            <Background3D />
 
             {/* CROSSHAIR CURSOR */}
-            <div ref={cursorRef} className="fixed top-0 left-0 w-8 h-8 pointer-events-none z-[9999] -translate-x-1/2 -translate-y-1/2 border-2 border-game-red bg-transparent rounded-full mix-blend-difference flex items-center justify-center">
-                <div className="w-1 h-1 bg-game-red rounded-full" />
+            <div ref={cursorRef} className="fixed top-0 left-0 w-8 h-8 pointer-events-none z-[9999] -translate-x-1/2 -translate-y-1/2 border-2 border-[#FF4655] bg-transparent rounded-full mix-blend-difference flex items-center justify-center">
+                <div className="w-1 h-1 bg-[#FF4655] rounded-full" />
             </div>
 
-            {/* BACKGROUND GRID */}
-            <div className="absolute inset-0 z-0 bg-grid-pattern opacity-10 pointer-events-none"
-                style={{ backgroundImage: "linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px)", backgroundSize: "40px 40px" }}
-            />
-
             {/* SIDEBAR HUD */}
-            <aside className="w-24 border-r border-white/10 flex flex-col items-center py-10 z-20 bg-[#0F1923]/90 backdrop-blur-sm relative">
-                <div className="absolute top-0 right-0 w-1 h-full bg-game-red/50 scale-y-0 hover:scale-y-100 transition-transform origin-top" />
+            <aside className="w-24 border-r border-white/10 flex flex-col items-center py-10 z-20 bg-[#0F1923]/80 backdrop-blur-md relative">
+                <div className="absolute top-0 right-0 w-1 h-full bg-[#FF4655]/50 scale-y-0 hover:scale-y-100 transition-transform origin-top" />
 
                 <div className="mb-20 hud-element">
-                    <div className="w-12 h-12 border-2 border-game-red flex items-center justify-center relative group cursor-pointer">
-                        <div className="absolute inset-0 bg-game-red opacity-0 group-hover:opacity-20 transition-opacity" />
+                    <div className="w-12 h-12 border-2 border-[#FF4655] flex items-center justify-center relative group cursor-pointer">
+                        <div className="absolute inset-0 bg-[#FF4655] opacity-0 group-hover:opacity-20 transition-opacity" />
                         <Crosshair className="w-6 h-6 text-white group-hover:rotate-90 transition-transform duration-500" />
                     </div>
                 </div>
@@ -124,24 +157,24 @@ export default function GamesPage() {
                         <button
                             key={i}
                             onClick={() => navigate(item.path)}
-                            className={`hud-element group relative flex justify-center w-full py-2 hover:bg-white/5 transition-colors ${item.path === '/games' ? 'border-r-2 border-game-red' : ''}`}
+                            className={`hud-element group relative flex justify-center w-full py-2 hover:bg-white/5 transition-colors ${item.path === '/games' ? 'border-r-2 border-[#FF4655]' : ''}`}
                         >
-                            <item.icon className={`w-6 h-6 transition-colors duration-300 ${item.path === '/games' ? 'text-game-red' : 'text-game-gray group-hover:text-white'}`} />
-                            {item.path !== '/games' && <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-1 bg-game-yellow rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />}
+                            <item.icon className={`w-6 h-6 transition-colors duration-300 ${item.path === '/games' ? 'text-[#FF4655]' : 'text-gray-400 group-hover:text-white'}`} />
+                            {item.path !== '/games' && <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-1 bg-yellow-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />}
                         </button>
                     ))}
                 </nav>
 
-                <button onClick={handleLogout} className="hud-element mb-10 text-game-gray hover:text-game-red transition-colors">
+                <button onClick={handleLogout} className="hud-element mb-10 text-gray-400 hover:text-[#FF4655] transition-colors">
                     <LogOut className="w-6 h-6" />
                 </button>
             </aside>
 
             {/* MAIN CONTENT */}
             <main className="flex-1 relative overflow-y-auto p-10 lg:p-20 flex flex-col z-10">
-                <header className="flex justify-between items-end mb-20 hud-element">
+                <header className="flex justify-between items-end mb-20 header-text">
                     <div>
-                        <div className="text-xs text-game-red font-mono tracking-[0.2em] mb-2 flex items-center gap-2">
+                        <div className="text-xs text-[#FF4655] font-mono tracking-[0.2em] mb-2 flex items-center gap-2">
                             <Gamepad2 className="w-4 h-4" /> SIMULATION DECK
                         </div>
                         <h1 className="text-6xl font-black uppercase italic tracking-tighter">
@@ -149,8 +182,8 @@ export default function GamesPage() {
                         </h1>
                     </div>
                     <div className="text-right hidden md:block">
-                        <div className="text-2xl font-bold font-mono text-game-yellow">STATUS: LIVE</div>
-                        <div className="text-xs text-game-gray tracking-widest">SYSTEM OPTIMAL</div>
+                        <div className="text-2xl font-bold font-mono text-yellow-400">STATUS: LIVE</div>
+                        <div className="text-xs text-gray-400 tracking-widest">SYSTEM OPTIMAL</div>
                     </div>
                 </header>
 
@@ -159,7 +192,7 @@ export default function GamesPage() {
                         <div
                             key={game.id}
                             onClick={() => navigate(game.path)}
-                            className="game-card group relative h-80 bg-[#0F1923] border border-white/10 hover:border-game-red transition-all duration-300 cursor-pointer overflow-hidden clip-path-slant"
+                            className="game-card group relative h-80 bg-[#0F1923]/60 backdrop-blur-sm border border-white/10 hover:border-[#FF4655] transition-all duration-300 cursor-pointer overflow-hidden clip-path-slant"
                         >
                             {/* Bg Image */}
                             <div className="absolute inset-0 bg-cover bg-center opacity-40 group-hover:scale-110 transition-transform duration-700" style={{ backgroundImage: `url(${game.image})` }} />
@@ -167,15 +200,15 @@ export default function GamesPage() {
 
                             <div className="absolute bottom-0 left-0 p-8 w-full">
                                 <div className="flex justify-between items-end mb-2">
-                                    <h2 className="text-3xl font-black uppercase italic tracking-tighter text-white group-hover:text-game-yellow transition-colors">
+                                    <h2 className="text-3xl font-black uppercase italic tracking-tighter text-white group-hover:text-yellow-400 transition-colors">
                                         {game.title}
                                     </h2>
-                                    <Play className="w-8 h-8 text-game-red opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0 transition-all duration-300" />
+                                    <Play className="w-8 h-8 text-[#FF4655] opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0 transition-all duration-300" />
                                 </div>
-                                <p className="text-game-gray text-sm font-mono mb-4 border-l-2 border-game-red pl-3">
+                                <p className="text-gray-400 text-sm font-mono mb-4 border-l-2 border-[#FF4655] pl-3">
                                     {game.desc}
                                 </p>
-                                <div className="inline-block bg-game-red/20 border border-game-red/50 text-game-red text-[10px] uppercase font-bold px-2 py-1 tracking-widest">
+                                <div className="inline-block bg-[#FF4655]/20 border border-[#FF4655]/50 text-[#FF4655] text-[10px] uppercase font-bold px-2 py-1 tracking-widest">
                                     {game.stats}
                                 </div>
                             </div>
@@ -184,6 +217,20 @@ export default function GamesPage() {
                 </div>
 
             </main>
+
+            <style>{`
+                .clip-path-slant {
+                    clip-path: polygon(
+                        20px 0, 100% 0, 
+                        100% calc(100% - 20px), calc(100% - 20px) 100%, 
+                        0 100%, 0 20px
+                    );
+                }
+                .text-stroke-red {
+                    -webkit-text-stroke: 1px #FF4655;
+                    color: transparent;
+                }
+            `}</style>
         </div>
     );
 }

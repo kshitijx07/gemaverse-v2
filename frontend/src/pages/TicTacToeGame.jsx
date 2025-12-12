@@ -9,6 +9,23 @@ export default function TicTacToeGame() {
     const [isPlayerTurn, setIsPlayerTurn] = useState(true); // Player = X
     const [winner, setWinner] = useState(null); // 'X', 'O', 'DRAW'
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [stats, setStats] = useState({ wins: 0, losses: 0 });
+
+    // Fetch Stats
+    useEffect(() => {
+        const fetchStats = async () => {
+            const username = localStorage.getItem('username');
+            if (username) {
+                try {
+                    const res = await axios.get(`/api/users/${username}/stats`);
+                    setStats({ wins: res.data.wins || 0, losses: res.data.losses || 0 });
+                } catch (e) {
+                    console.error("Failed to fetch TTT stats", e);
+                }
+            }
+        };
+        fetchStats();
+    }, []);
 
     // Win Combinations
     const COMBOS = [
@@ -91,12 +108,15 @@ export default function TicTacToeGame() {
 
         setIsSubmitting(true);
         try {
-            await axios.post('/api/games/submit', {
+            const res = await axios.post('/api/games/submit', {
                 username,
                 game: 'TICTACTOE',
                 score: 0,
                 result: status
             });
+            if (res.data) {
+                setStats({ wins: res.data.wins || 0, losses: res.data.losses || 0 });
+            }
         } catch (e) {
             console.error(e);
         } finally {
@@ -125,6 +145,9 @@ export default function TicTacToeGame() {
                 <div className="text-right">
                     <h1 className="text-2xl font-black italic tracking-tighter uppercase text-white"><span className="text-game-red">SIEGE</span> ENGINE</h1>
                     <div className="text-[10px] text-game-gray tracking-widest font-mono">AI DIFFICULTY: ADAPTIVE</div>
+                    <div className="text-[10px] text-game-yellow font-bold mt-1">
+                        W: {stats.wins} // L: {stats.losses}
+                    </div>
                 </div>
             </div>
 

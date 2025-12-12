@@ -109,7 +109,7 @@ export default function GamesPage() {
             title: 'SNAKE PROTOCOL',
             desc: 'Navigate the grid. Consume data packets. Avoid termination.',
             path: '/games/snake',
-            image: 'https://images.unsplash.com/photo-1614726365723-49cfa385a494?w=800&q=80',
+            image: 'https://images.unsplash.com/photo-1634063182170-5c1755edfed8?q=80&w=764&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
             stats: 'HIGH SCORE TRACKED'
         },
         {

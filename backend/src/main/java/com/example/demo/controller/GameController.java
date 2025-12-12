@@ -108,7 +108,17 @@ public class GameController {
         // TTT Win = 100 XP
         // Snake Score = 1 XP per point (High Score)
         // Play Time = 10 XP per hour
-        int newTotalXp = (user.getWins() * 100) + user.getSnakeHighScore() + (user.getPlayTime() * 10);
+        // Update PlayTime
+        if (payload.containsKey("duration")) {
+            double durationSeconds = 0.0;
+            if (payload.get("duration") instanceof Number) {
+                durationSeconds = ((Number) payload.get("duration")).doubleValue();
+            }
+            double hoursToAdd = durationSeconds / 3600.0;
+            user.setPlayTime(user.getPlayTime() + hoursToAdd);
+        }
+
+        int newTotalXp = (user.getWins() * 100) + user.getSnakeHighScore() + (int) (user.getPlayTime() * 10);
         user.setTotalXp(newTotalXp);
 
         // Update Rank Badge based on XP

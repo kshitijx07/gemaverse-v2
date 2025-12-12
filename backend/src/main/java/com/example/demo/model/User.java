@@ -24,7 +24,7 @@ public class User {
     private int kills = 0;
     private int deaths = 0;
     private String bio = "New Recruit";
-    private int playTime = 0; // In hours
+    private double playTime = 0.0; // In hours
     private int snakeHighScore = 0;
     private int totalXp = 0;
 
@@ -109,11 +109,11 @@ public class User {
         this.bio = bio;
     }
 
-    public int getPlayTime() {
+    public double getPlayTime() {
         return playTime;
     }
 
-    public void setPlayTime(int playTime) {
+    public void setPlayTime(double playTime) {
         this.playTime = playTime;
     }
 

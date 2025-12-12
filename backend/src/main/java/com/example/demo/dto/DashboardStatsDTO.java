@@ -8,7 +8,7 @@ public class DashboardStatsDTO {
     private int totalMatches;
     private double winRate;
     private String kdRatio;
-    private int playTime;
+    private double playTime;
     private int snakeHighScore;
     private int totalXp;
     private String bio;
@@ -74,11 +74,13 @@ public class DashboardStatsDTO {
         this.kdRatio = kdRatio;
     }
 
-    public int getPlayTime() {
+    // ...
+
+    public double getPlayTime() {
         return playTime;
     }
 
-    public void setPlayTime(int playTime) {
+    public void setPlayTime(double playTime) {
         this.playTime = playTime;
     }
 

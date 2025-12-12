@@ -58,6 +58,8 @@ export default function SnakeGame() {
     const scoreRef = useRef(0);
     const gameOverRef = useRef(false);
 
+    const startTimeRef = useRef(Date.now());
+
     const initGame = useCallback(() => {
         setSnake([{ x: 10, y: 10 }]);
         setFood({ x: 15, y: 15 });
@@ -72,6 +74,7 @@ export default function SnakeGame() {
         directionRef.current = { x: 1, y: 0 };
         scoreRef.current = 0;
         gameOverRef.current = false;
+        startTimeRef.current = Date.now(); // Start Timer
 
         if (gameLoopRef.current) clearInterval(gameLoopRef.current);
         gameLoopRef.current = setInterval(gameLoop, SPEED);
@@ -83,6 +86,9 @@ export default function SnakeGame() {
         setGameOver(true);
         gameOverRef.current = true;
         setGameStarted(false);
+
+        // Calculate Duration
+        const durationSeconds = (Date.now() - startTimeRef.current) / 1000;
 
         // Submit Score
         let username = localStorage.getItem('username');
@@ -99,6 +105,7 @@ export default function SnakeGame() {
                 username,
                 game: 'SNAKE',
                 score: scoreRef.current,
+                duration: durationSeconds, // Send Duration
                 result: 'COMPLETED'
             });
 

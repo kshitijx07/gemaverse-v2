@@ -12,6 +12,10 @@ import {
     Stars,
     Sparkles
 } from '@react-three/drei';
+import {
+    PieChart, Pie, Cell, AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, RadialBarChart, RadialBar, PolarAngleAxis,
+    Radar, RadarChart, PolarGrid, PolarRadiusAxis
+} from 'recharts';
 // ------------------
 import {
     LayoutDashboard,
@@ -110,13 +114,14 @@ export default function Dashboard() {
     const mainRef = useRef(null);
     const cursorRef = useRef(null);
     const [stats, setStats] = useState(null);
+    const [matches, setMatches] = useState([]); // New Match History
     const [loading, setLoading] = useState(true);
 
     const { playHover, playClick } = useAudio();
 
-    // Fetch Stats
+    // Fetch Stats & Matches
     useEffect(() => {
-        const fetchStats = async () => {
+        const fetchData = async () => {
             const storedUser = localStorage.getItem('username');
             if (!storedUser) {
                 navigate('/login');
@@ -124,19 +129,53 @@ export default function Dashboard() {
             }
 
             try {
-                const response = await axios.get(`/api/users/${storedUser}/stats`);
-                setStats(response.data);
+                // Fetch Stats and Matches in parallel
+                const [statsRes, matchesRes] = await Promise.allSettled([
+                    axios.get(`/api/users/${storedUser}/stats`),
+                    axios.get(`/api/matches/user/${storedUser}`)
+                ]);
+
+                if (statsRes.status === 'fulfilled') {
+                    setStats(statsRes.value.data);
+                }
+
+                if (matchesRes.status === 'fulfilled') {
+                    setMatches(matchesRes.value.data);
+                }
+
             } catch (error) {
-                console.error("Failed to fetch dashboard stats", error);
-                // Optionally set fallback/demo stats if API fails, but for now we'll just log
+                console.error("Failed to fetch dashboard data", error);
             } finally {
-                // Determine loading delay based on network speed (optional simulation)
-                // or just turn off loading
                 setLoading(false);
             }
         };
-        fetchStats();
+        fetchData();
     }, [navigate]);
+
+    // Prepare Chart Data
+    const pieData = [
+        { name: 'Wins', value: stats?.wins || 0, color: '#10B981' },
+        { name: 'Losses', value: stats?.losses || 0, color: '#EF4444' }
+    ];
+
+    // Process Trend Data (Last 10 matches)
+    const trendData = [...matches].reverse().slice(-10).map((m, i) => ({
+        index: i + 1,
+        score: m.score,
+        result: m.result
+    }));
+
+    // Data for Skill Radar
+    const skillData = [
+        { subject: 'Tactics', A: (stats?.winRate || 0), fullMark: 100 },
+        { subject: 'Lethality', A: Math.min((parseFloat(stats?.kdRatio || 0) * 20), 100), fullMark: 100 }, // Scale K/D
+        { subject: 'Reflexes', A: Math.min((stats?.snakeHighScore || 0) / 2, 100), fullMark: 100 }, // Scale Score
+        { subject: 'Endurance', A: Math.min((stats?.playTime || 0) * 5, 100), fullMark: 100 }, // Scale Hours
+        { subject: 'Experience', A: Math.min((stats?.totalXp || 0) / 50, 100), fullMark: 100 },
+    ];
+
+    // Recent Battle Log (Last 5)
+    const recentBattles = [...matches].slice(0, 5);
 
     // Animations & Cursor
     useEffect(() => {
@@ -296,45 +335,153 @@ export default function Dashboard() {
                         </div>
                     </div>
 
-                    {/* CARD 2: COMBAT RECORD */}
-                    <div className="hud-element lg:col-span-2 bg-[#0F1923]/60 backdrop-blur-sm border border-white/10 p-8 relative flex flex-col justify-between group hover:border-yellow-400/50 transition-colors">
-                        <div className="flex justify-between items-center mb-6">
+                    {/* CARD 2: COMBAT RECORD (Charts & Stats) */}
+                    <div className="hud-element lg:col-span-2 bg-[#0F1923]/60 backdrop-blur-sm border border-white/10 p-6 relative flex flex-col gap-6 group hover:border-yellow-400/50 transition-colors">
+                        <div className="flex justify-between items-center">
                             <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest">Combat Record</h3>
-                            <div className="text-xs bg-[#FF4655]/10 text-[#FF4655] px-2 py-1 font-mono">LIVE FEED</div>
+                            <div className="text-xs bg-[#FF4655]/10 text-[#FF4655] px-2 py-1 font-mono">LIVE ANALYTICS</div>
                         </div>
-                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-                            <div>
-                                <div className="text-3xl font-black text-white">{stats?.totalMatches || 0}</div>
-                                <div className="text-xs text-gray-400 font-mono uppercase mt-1">Matches</div>
+
+                        {/* Summary Stats */}
+                        <div className="grid grid-cols-4 gap-4 text-center border-b border-white/5 pb-6">
+                            <div><div className="text-2xl font-black text-white">{stats?.totalMatches || 0}</div><div className="text-[10px] text-gray-400 uppercase">Matches</div></div>
+                            <div><div className="text-2xl font-black text-white">{stats?.wins || 0}</div><div className="text-[10px] text-gray-400 uppercase">Wins</div></div>
+                            <div><div className="text-2xl font-black text-yellow-400">{stats?.kdRatio || '0.0'}</div><div className="text-[10px] text-gray-400 uppercase">K/D</div></div>
+                            <div><div className="text-2xl font-black text-[#FF4655]">{stats?.winRate || 0}%</div><div className="text-[10px] text-gray-400 uppercase">Win Rate</div></div>
+                        </div>
+
+                        {/* Charts Area */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-[200px]">
+                            {/* Win/Loss Pie */}
+                            <div className="relative">
+                                <div className="absolute top-2 left-2 text-[10px] text-gray-500 uppercase font-bold">Outcome Ratio</div>
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie
+                                            data={pieData}
+                                            innerRadius={40}
+                                            outerRadius={60}
+                                            paddingAngle={5}
+                                            dataKey="value"
+                                            stroke="none"
+                                        >
+                                            {pieData.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={entry.color} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip
+                                            contentStyle={{ backgroundColor: '#0F1923', borderColor: '#FF4655', color: '#FFF' }}
+                                            itemStyle={{ color: '#FFF' }}
+                                        />
+                                    </PieChart>
+                                </ResponsiveContainer>
                             </div>
-                            <div>
-                                <div className="text-3xl font-black text-white">{stats?.wins || 0}</div>
-                                <div className="text-xs text-gray-400 font-mono uppercase mt-1">Victories</div>
-                            </div>
-                            <div>
-                                <div className="text-3xl font-black text-yellow-400">{stats?.kdRatio || '0.0'}</div>
-                                <div className="text-xs text-gray-400 font-mono uppercase mt-1">K/D Ratio</div>
-                            </div>
-                            <div>
-                                <div className="text-3xl font-black text-[#FF4655]">{stats?.winRate || 0}%</div>
-                                <div className="text-xs text-gray-400 font-mono uppercase mt-1">Win Rate</div>
+
+                            {/* Score Trend Area */}
+                            <div className="relative">
+                                <div className="absolute top-2 left-2 text-[10px] text-gray-500 uppercase font-bold">Perf. Trend</div>
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <AreaChart data={trendData}>
+                                        <defs>
+                                            <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#FF4655" stopOpacity={0.8} />
+                                                <stop offset="95%" stopColor="#FF4655" stopOpacity={0} />
+                                            </linearGradient>
+                                        </defs>
+                                        <XAxis dataKey="index" hide />
+                                        <Tooltip
+                                            contentStyle={{ backgroundColor: '#0F1923', borderColor: '#FF4655', color: '#FFF' }}
+                                            itemStyle={{ color: '#FF4655' }}
+                                        />
+                                        <Area type="monotone" dataKey="score" stroke="#FF4655" fillOpacity={1} fill="url(#colorScore)" />
+                                    </AreaChart>
+                                </ResponsiveContainer>
                             </div>
                         </div>
                     </div>
 
-                    {/* CARD 3: RECENT */}
-                    <div className="hud-element lg:col-span-3 bg-white/5 border border-white/10 p-1 flex items-center justify-between min-h-[100px] mt-4 relative overflow-hidden backdrop-blur-sm">
+                    {/* CARD 3: PLAYTIME ANALYSIS */}
+                    <div className="hud-element lg:col-span-3 bg-white/5 border border-white/10 p-1 flex items-center justify-between min-h-[100px] mt-4 relative overflow-hidden backdrop-blur-sm group hover:border-[#FF4655]/50 transition-colors">
                         <div className="absolute inset-0 bg-[#FF4655]/5 skew-x-[-20deg] translate-x-1/2" />
+
                         <div className="p-8 z-10 flex flex-col lg:flex-row gap-8 items-center w-full justify-between">
-                            <div className="flex items-center gap-4">
-                                <Activity className="w-8 h-8 text-[#FF4655]" />
+                            <div className="flex items-center gap-6">
+                                <div className="relative w-20 h-20">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <RadialBarChart
+                                            innerRadius="80%"
+                                            outerRadius="100%"
+                                            barSize={10}
+                                            data={[{ name: 'Hours', value: (stats?.playTime || 0) % 24, fill: '#FF4655' }]}
+                                            startAngle={90}
+                                            endAngle={-270}
+                                        >
+                                            <PolarAngleAxis type="number" domain={[0, 24]} angleAxisId={0} tick={false} />
+                                            <RadialBar background clockWise dataKey="value" cornerRadius={10} />
+                                        </RadialBarChart>
+                                    </ResponsiveContainer>
+                                    <Activity className="w-8 h-8 text-[#FF4655] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                                </div>
                                 <div>
                                     <h4 className="font-bold text-white uppercase tracking-wider">Playtime Analysis</h4>
                                     <p className="text-xs text-gray-400 font-mono">Total Hours Logged in Simulation</p>
                                 </div>
                             </div>
-                            <div className="text-5xl font-black text-white font-mono tracking-tighter">{stats?.playTime || 0}<span className="text-xl text-gray-400">H</span></div>
+                            <div className="text-5xl font-black text-white font-mono tracking-tighter">
+                                {stats?.playTime != null ? Number(stats.playTime).toFixed(1) : '0.0'}
+                                <span className="text-xl text-gray-400">H</span>
+                            </div>
                         </div>
+                    </div>
+
+                    {/* CARD 4: OPERATIVE SKILL GRAPH (Radar) */}
+                    <div className="hud-element lg:col-span-1 bg-[#0F1923]/60 backdrop-blur-sm border border-white/10 p-4 relative flex flex-col items-center justify-center group hover:border-yellow-400/50 transition-colors h-[350px]">
+                        <div className="absolute top-2 left-2 text-[10px] text-gray-500 uppercase font-bold tracking-widest">Operative Skill Graph</div>
+                        <ResponsiveContainer width="100%" height="100%">
+                            <RadarChart cx="50%" cy="50%" outerRadius="70%" data={skillData}>
+                                <PolarGrid stroke="#334155" />
+                                <PolarAngleAxis dataKey="subject" tick={{ fill: '#94a3b8', fontSize: 10 }} />
+                                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                                <Radar
+                                    name="Skills"
+                                    dataKey="A"
+                                    stroke="#FCE300"
+                                    strokeWidth={2}
+                                    fill="#FCE300"
+                                    fillOpacity={0.3}
+                                />
+                            </RadarChart>
+                        </ResponsiveContainer>
+                    </div>
+
+                    {/* CARD 5: RECENT BATTLE LOG */}
+                    <div className="hud-element lg:col-span-2 bg-black/40 border border-white/10 p-6 relative font-mono text-sm overflow-hidden h-[350px]">
+                        <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-2">
+                            <h3 className="text-gray-400 uppercase tracking-widest text-xs">Recent Battle Log</h3>
+                            <div className="animate-pulse w-2 h-2 bg-green-500 rounded-full" />
+                        </div>
+                        <div className="space-y-3 overflow-y-auto h-full pb-10 scrollbar-hide">
+                            {recentBattles.length === 0 ? (
+                                <div className="text-gray-600 italic">No combat data recorded.</div>
+                            ) : (
+                                recentBattles.map((match, i) => (
+                                    <div key={i} className="flex justify-between items-center text-xs group hover:bg-white/5 p-2 rounded transition-colors cursor-default">
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-gray-600">[{match.playedAt ? new Date(match.playedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '00:00'}]</span>
+                                            <span className={`${match.result === 'WIN' ? 'text-green-400' : match.result === 'LOSS' ? 'text-red-400' : 'text-yellow-400'} font-bold w-12`}>
+                                                {match.result || 'DONE'}
+                                            </span>
+                                            <span className="text-gray-300">{match.gameName}</span>
+                                        </div>
+                                        <div className="font-bold text-gray-500 group-hover:text-white">
+                                            SCORE: {match.score}
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                        {/* Scanline Overlay */}
+                        <div className="absolute inset-0 pointer-events-none bg-[url('https://media.giphy.com/media/dummy/giphy.gif')] opacity-[0.02]" />
                     </div>
 
                 </div>

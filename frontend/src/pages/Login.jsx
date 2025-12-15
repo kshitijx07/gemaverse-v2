@@ -1,13 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { gsap } from 'gsap';
-import { ArrowLeft, User, Lock, ArrowRight, AlertCircle, Crosshair, Shield, Hexagon } from 'lucide-react';
+import { ArrowLeft, User, Lock, ArrowRight, AlertCircle, Crosshair, Shield, Hexagon, Palette } from 'lucide-react';
 import axios from 'axios';
 
 import { useAudio } from '../context/AudioContext';
+import { useTheme } from '../context/ThemeContext';
+import EntrySequence from '../components/EntrySequence';
 
 export default function Login() {
     const { playLoginSuccess } = useAudio();
+    const { theme, cycleTheme } = useTheme();
     const navigate = useNavigate();
     const containerRef = useRef(null);
     const formRef = useRef(null);
@@ -15,6 +18,7 @@ export default function Login() {
     const [formData, setFormData] = useState({ username: '', password: '' });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [showEntry, setShowEntry] = useState(false);
 
     useEffect(() => {
         // HUD Entry Animation
@@ -62,12 +66,25 @@ export default function Login() {
                 localStorage.setItem('username', response.data.username);
                 playLoginSuccess();
 
+                console.log("LOGIN SUCCESS. Triggering Glitch...");
+
+                // SAFETY FALLBACK: If GSAP fails, force entry after 500ms
+                const fallbackTimer = setTimeout(() => {
+                    console.warn("GSAP stalled. Forcing Entry Sequence.");
+                    setShowEntry(true);
+                }, 500);
+
                 // Glitch out
                 gsap.to(formRef.current, {
                     skewX: 20,
                     opacity: 0,
                     duration: 0.3,
-                    onComplete: () => navigate('/dashboard')
+                    onStart: () => console.log("Glitch Started"),
+                    onComplete: () => {
+                        console.log("Glitch Complete. Showing Entry.");
+                        clearTimeout(fallbackTimer);
+                        setShowEntry(true);
+                    }
                 });
             }
         } catch (err) {
@@ -81,26 +98,40 @@ export default function Login() {
         }
     };
 
+    if (showEntry) {
+        return <EntrySequence onComplete={() => navigate('/dashboard')} />;
+    }
+
     return (
-        <div ref={containerRef} className="min-h-screen bg-game-dark text-white flex items-center justify-center relative overflow-hidden p-6 font-sans">
+        <div ref={containerRef} className="min-h-screen bg-game-dark text-game-white flex items-center justify-center relative overflow-hidden p-6 font-sans">
 
             {/* Background Grid */}
             <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 pointer-events-none" />
             <div className="absolute inset-0 z-0 bg-grid-pattern opacity-20"
-                style={{ backgroundImage: "linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px)", backgroundSize: "40px 40px" }}
+                style={{ backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px)`, backgroundSize: "40px 40px" }}
             />
 
             {/* Scanning Line */}
             <div className="scanline absolute top-0 left-0 w-full h-2 bg-game-red/20 blur pointer-events-none z-10 opactiy-50" />
 
-            {/* Back Link */}
-            <Link to="/" className="absolute top-8 left-8 flex items-center gap-2 text-game-gray hover:text-game-red transition-colors font-mono uppercase tracking-widest text-xs group z-50">
-                <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-                Return to Base
-            </Link>
+            {/* Top Bar */}
+            <div className="absolute top-8 left-8 right-8 flex justify-between items-center z-50">
+                <Link to="/" className="flex items-center gap-2 text-game-gray hover:text-game-red transition-colors font-mono uppercase tracking-widest text-xs group">
+                    <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                    Return to Base
+                </Link>
+
+                <button
+                    onClick={cycleTheme}
+                    className="text-game-gray hover:text-game-red transition-colors"
+                    title={`Theme: ${theme.name}`}
+                >
+                    <Palette className="w-6 h-6" />
+                </button>
+            </div>
 
             {/* Login HUD */}
-            <div ref={formRef} className="relative z-20 w-full max-w-md bg-[#0F1923]/90 border border-white/10 p-10 md:p-12 shadow-2xl backdrop-blur-sm clip-path-hud">
+            <div ref={formRef} className="relative z-20 w-full max-w-md bg-game-surface border border-game-border p-10 md:p-12 shadow-2xl backdrop-blur-sm clip-path-hud">
 
                 {/* HUD Corners */}
                 <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-game-red" />
@@ -112,7 +143,7 @@ export default function Login() {
                         <Hexagon className="w-full h-full text-white/5 absolute animate-spin-slow" />
                         <Shield className="w-8 h-8 text-game-red relative z-10" />
                     </div>
-                    <h2 className="text-3xl font-black uppercase tracking-tighter text-white">
+                    <h2 className="text-3xl font-black uppercase tracking-tighter text-game-white">
                         Agent <span className="text-transparent bg-clip-text bg-gradient-to-r from-game-red to-game-yellow">Login</span>
                     </h2>
                     <p className="text-game-gray font-mono text-xs mt-3 tracking-widest">SECURE CONNECTION REQUIRED</p>
@@ -134,7 +165,7 @@ export default function Login() {
                                 name="username"
                                 value={formData.username}
                                 onChange={handleChange}
-                                className="w-full bg-black/40 border border-white/10 py-4 px-4 text-white placeholder-gray-700 outline-none focus:border-game-red focus:bg-black/60 transition-all font-mono text-sm clip-path-input"
+                                className="w-full bg-game-input border border-game-border py-4 px-4 text-game-white placeholder-gray-500 outline-none focus:border-game-red focus:bg-game-surface transition-all font-mono text-sm clip-path-input"
                                 placeholder="USERNAME_ID"
                                 required
                             />
@@ -153,7 +184,7 @@ export default function Login() {
                                 name="password"
                                 value={formData.password}
                                 onChange={handleChange}
-                                className="w-full bg-black/40 border border-white/10 py-4 px-4 text-white placeholder-gray-700 outline-none focus:border-game-red focus:bg-black/60 transition-all font-mono text-sm clip-path-input"
+                                className="w-full bg-game-input border border-game-border py-4 px-4 text-game-white placeholder-gray-500 outline-none focus:border-game-red focus:bg-game-surface transition-all font-mono text-sm clip-path-input"
                                 placeholder="••••••••"
                                 required
                             />
@@ -175,10 +206,10 @@ export default function Login() {
 
                 </form>
 
-                <div className="hud-item mt-8 text-center border-t border-white/10 pt-6">
+                <div className="hud-item mt-8 text-center border-t border-game-border pt-6">
                     <p className="text-xs text-game-gray font-mono">
                         NO CREDENTIALS?{' '}
-                        <Link to="/signup" className="text-white font-bold hover:text-game-yellow transition-colors tracking-wider decoration-game-yellow underline underline-offset-4">
+                        <Link to="/signup" className="text-game-white font-bold hover:text-game-yellow transition-colors tracking-wider decoration-game-yellow underline underline-offset-4">
                             INITIATE REGISTRATION
                         </Link>
                     </p>

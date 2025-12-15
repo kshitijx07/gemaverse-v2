@@ -1,10 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Cpu, X, Circle, RotateCcw } from 'lucide-react';
+import { ArrowLeft, X, Circle, RotateCcw, Palette } from 'lucide-react';
 import axios from 'axios';
+import { useTheme } from '../context/ThemeContext';
 
 export default function TicTacToeGame() {
     const navigate = useNavigate();
+    const { theme, cycleTheme } = useTheme();
     const [board, setBoard] = useState(Array(9).fill(null));
     const [isPlayerTurn, setIsPlayerTurn] = useState(true); // Player = X
     const [winner, setWinner] = useState(null); // 'X', 'O', 'DRAW'
@@ -132,18 +134,28 @@ export default function TicTacToeGame() {
     };
 
     return (
-        <div className="min-h-screen bg-game-dark text-white font-sans flex flex-col items-center justify-center p-10 cursor-none selection:bg-game-red selection:text-black">
+        <div className="min-h-screen bg-game-dark text-game-white font-sans flex flex-col items-center justify-center p-10 cursor-none selection:bg-game-red selection:text-black">
 
             {/* Header */}
             <div className="w-full max-w-md flex justify-between items-center mb-12">
-                <button
-                    onClick={() => navigate('/games')}
-                    className="flex items-center gap-2 text-game-gray hover:text-game-red transition-colors text-xs uppercase tracking-widest bg-white/5 py-2 px-4 clip-path-slant"
-                >
-                    <ArrowLeft className="w-4 h-4" /> Retreat
-                </button>
+                <div className="flex items-center gap-4">
+                    <button
+                        onClick={() => navigate('/games')}
+                        className="flex items-center gap-2 text-game-gray hover:text-game-red transition-colors text-xs uppercase tracking-widest bg-white/5 py-2 px-4 clip-path-slant"
+                    >
+                        <ArrowLeft className="w-4 h-4" /> Retreat
+                    </button>
+                    <button
+                        onClick={cycleTheme}
+                        className="flex items-center justify-center text-game-gray hover:text-game-red transition-colors bg-white/5 w-10 h-8 clip-path-slant"
+                        title={`Theme: ${theme.name}`}
+                    >
+                        <Palette className="w-4 h-4" />
+                    </button>
+                </div>
+
                 <div className="text-right">
-                    <h1 className="text-2xl font-black italic tracking-tighter uppercase text-white"><span className="text-game-red">SIEGE</span> ENGINE</h1>
+                    <h1 className="text-2xl font-black italic tracking-tighter uppercase text-game-white"><span className="text-game-red">SIEGE</span> ENGINE</h1>
                     <div className="text-[10px] text-game-gray tracking-widest font-mono">AI DIFFICULTY: ADAPTIVE</div>
                     <div className="text-[10px] text-game-yellow font-bold mt-1">
                         W: {stats.wins} // L: {stats.losses}
@@ -153,7 +165,7 @@ export default function TicTacToeGame() {
 
             {/* Game Board */}
             <div className="relative">
-                <div className="grid grid-cols-3 gap-2 bg-[#0F1923] p-4 border border-white/10 shadow-2xl clip-path-slant">
+                <div className="grid grid-cols-3 gap-2 bg-game-core p-4 border border-white/10 shadow-2xl clip-path-slant">
                     {board.map((cell, idx) => (
                         <div
                             key={idx}
@@ -185,7 +197,7 @@ export default function TicTacToeGame() {
                         )}
                         {winner === 'DRAW' && (
                             <>
-                                <div className="text-4xl font-black italic uppercase text-white mb-2">STALEMATE</div>
+                                <div className="text-4xl font-black italic uppercase text-game-white mb-2">STALEMATE</div>
                                 <div className="text-xs text-game-gray mb-6">TACTICAL DEADLOCK</div>
                             </>
                         )}

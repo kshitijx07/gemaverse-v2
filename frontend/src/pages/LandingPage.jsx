@@ -5,63 +5,10 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import * as THREE from 'three';
 import { Play, ArrowRight, Crosshair, Cpu, Zap, Radio } from 'lucide-react';
 import Navbar from '../components/Navbar';
+import { useTheme } from '../context/ThemeContext';
 
 // Register plugin
 gsap.registerPlugin(ScrollTrigger);
-
-// --- 1. SHADERS: DIGITAL VR GRID (Glitchy, Fast, Tech) ---
-const fragmentShader = `
-uniform float uTime;
-uniform vec2 uResolution;
-uniform vec2 uMouse;
-
-varying vec2 vUv;
-
-// Random noise
-float random(vec2 st) {
-    return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
-}
-
-void main() {
-    vec2 uv = vUv;
-    uv.y += curvature(uv.x) * 0.1; // CRT Curvature effect placeholder if needed
-
-    // Grid
-    float zoom = 30.0;
-    vec2 gridUv = fract(uv * zoom - vec2(uTime * 0.5, uTime * 0.2)); // Moving grid
-    vec2 gridId = floor(uv * zoom);
-
-    float lineThickness = 0.05;
-    float grid = step(1.0 - lineThickness, gridUv.x) + step(1.0 - lineThickness, gridUv.y);
-    
-    // Glitch / Data Stream
-    float noiseVal = random(vec2(gridId.y, floor(uTime * 10.0)));
-    float stream = step(0.98, noiseVal) * step(uv.x, uMouse.x + 0.2) * step(uMouse.x - 0.2, uv.x);
-
-    // Color Palette
-    vec3 baseColor = vec3(0.06, 0.1, 0.14); // #0F1923 Dark Navy
-    vec3 gridColor = vec3(1.0, 1.0, 1.0) * 0.1; 
-    vec3 accentColor = vec3(1.0, 0.27, 0.33); // #FF4655 Red
-    
-    vec3 color = baseColor;
-    
-    // Mix Grid
-    color = mix(color, gridColor, grid);
-    
-    // Mix Stream/Glitch
-    color = mix(color, accentColor, stream * 0.8);
-
-    // Vignette
-    float d = length(uv - 0.5);
-    color *= 1.0 - d * 0.5;
-
-    gl_FragColor = vec4(color, 1.0);
-}
-
-float curvature(float x) {
-    return x * x * 0.1;
-}
-`;
 
 // Simple Vertex Shader override for full control
 const vertexShader = `
@@ -72,12 +19,9 @@ void main() {
 }
 `;
 
-// --- 2. COMPONENTS ---
-
-
-
 // 3. LANDING PAGE
 export default function LandingPage() {
+    const { theme } = useTheme();
     const mountRef = useRef(null);
     const cursorRef = useRef(null);
     const mainRef = useRef(null);
@@ -97,10 +41,16 @@ export default function LandingPage() {
         const camera = new THREE.OrthographicCamera(W / -2, W / 2, H / 2, H / -2, 0.1, 10);
         camera.position.z = 1;
 
+        // Convert Hex to Vec3 for Shader
+        const getThreeColor = (cssVar) => new THREE.Color(theme.colors[cssVar]);
+
         const uniforms = {
             uTime: { value: 0 },
             uResolution: { value: new THREE.Vector2(W, H) },
-            uMouse: { value: new THREE.Vector2(0.5, 0.5) }
+            uMouse: { value: new THREE.Vector2(0.5, 0.5) },
+            uColorBg: { value: getThreeColor('--bg-core') },
+            uColorGrid: { value: new THREE.Color('#FFFFFF') }, // Grid lines usually white/light
+            uColorAccent: { value: getThreeColor('--primary') }
         };
 
         const geometry = new THREE.PlaneGeometry(W, H);
@@ -113,6 +63,9 @@ export default function LandingPage() {
                 uniform float uTime;
                 uniform vec2 uResolution;
                 uniform vec2 uMouse;
+                uniform vec3 uColorBg;
+                uniform vec3 uColorGrid;
+                uniform vec3 uColorAccent;
                 varying vec2 vUv;
                 
                 float random(vec2 st) { return fract(sin(dot(st.xy,vec2(12.9898,78.233)))*43758.5453123); }
@@ -133,13 +86,20 @@ export default function LandingPage() {
                     // Random Tech Data blocks
                     float noise = step(0.9, random(i + floor(uTime * 5.0)));
                     
-                    vec3 col = vec3(0.06, 0.1, 0.14); // Base
-                    col += vec3(0.1) * line; // Grid lines
-                    col += vec3(1.0, 0.27, 0.33) * noise * 0.5; // Red Glitch
+                    vec3 col = uColorBg; // Base
+                    // Adjust grid visibility based on background darkness? 
+                    // For now, assume grid is light, so mix it in.
+                    // If BG is light (Olympus), white grid lines are invisible. 
+                    // We might need to invert grid color based on theme? 
+                    // Actually, let's just make grid color partially transparent over base
+                    
+                    col = mix(col, uColorGrid, line * 0.1); // 10% opacity grid lines
+                    
+                    col = mix(col, uColorAccent, noise * 0.5); // Accented Glitch
                     
                     // Mouse interaction
                     float d = distance(vUv * aspect, uMouse * aspect);
-                    col += vec3(0.99, 0.89, 0.0) * smoothstep(0.2, 0.0, d) * 0.1; // Yellow tint near mouse
+                    col += uColorAccent * smoothstep(0.2, 0.0, d) * 0.2; // Tint near mouse
 
                     gl_FragColor = vec4(col, 1.0);
                 }
@@ -176,6 +136,18 @@ export default function LandingPage() {
         let frameId;
         const animate = (t) => {
             uniforms.uTime.value = t * 0.001;
+            // Update colors dynamically if theme changes
+            uniforms.uColorBg.value.set(theme.colors['--bg-core']);
+            uniforms.uColorAccent.value.set(theme.colors['--primary']);
+
+            // Adjust grid color based on theme brightness maybe?
+            // Simple check: if bg is light (Olympus), make grid dark.
+            if (theme.id === 'olympus' || theme.id === 'midas') {
+                uniforms.uColorGrid.value.set('#000000'); // Dark grid on light BG
+            } else {
+                uniforms.uColorGrid.value.set('#FFFFFF'); // White grid on dark BG
+            }
+
             renderer.render(scene, camera);
             frameId = requestAnimationFrame(animate);
         };
@@ -188,7 +160,7 @@ export default function LandingPage() {
             mount.removeChild(renderer.domElement);
             renderer.dispose();
         };
-    }, []);
+    }, [theme]); // Re-run if theme changes (or handled inside animate)
 
     // Custom CROSSHAIR Cursor
     useEffect(() => {
@@ -199,8 +171,8 @@ export default function LandingPage() {
             gsap.to(cursor, { x: e.clientX, y: e.clientY, duration: 0.1, ease: 'power2.out' });
         };
 
-        const scaleUp = () => gsap.to(cursor, { scale: 2, borderColor: '#FCE300', ease: 'elastic.out' });
-        const scaleDown = () => gsap.to(cursor, { scale: 1, borderColor: '#FF4655', ease: 'power2.out' });
+        const scaleUp = () => gsap.to(cursor, { scale: 2, borderColor: theme.colors['--secondary'], ease: 'elastic.out' });
+        const scaleDown = () => gsap.to(cursor, { scale: 1, borderColor: theme.colors['--primary'], ease: 'power2.out' });
 
         window.addEventListener('mousemove', moveCursor);
         document.querySelectorAll('a, button').forEach(el => {
@@ -217,7 +189,7 @@ export default function LandingPage() {
                 });
             } catch (e) { }
         };
-    }, []);
+    }, [theme]);
 
     // GSAP HIGHLIGHTS SCROLL
     useEffect(() => {
@@ -247,7 +219,7 @@ export default function LandingPage() {
     }, []);
 
     return (
-        <div ref={mainRef} className="bg-game-dark text-white min-h-screen font-sans overflow-x-hidden selection:bg-game-red selection:text-black cursor-none">
+        <div ref={mainRef} className="bg-game-dark text-game-white min-h-screen font-sans overflow-x-hidden selection:bg-game-red selection:text-black cursor-none">
 
             {/* CROSSHAIR CURSOR */}
             <div ref={cursorRef} className="fixed top-0 left-0 w-8 h-8 pointer-events-none z-[9999] -translate-x-1/2 -translate-y-1/2 border-2 border-game-red bg-transparent rounded-full mix-blend-difference flex items-center justify-center">
@@ -257,13 +229,13 @@ export default function LandingPage() {
             <Navbar />
 
             {/* HERO SECTION */}
-            <header className="relative h-screen flex items-center justify-center overflow-hidden border-b border-white/10">
+            <header className="relative h-screen flex items-center justify-center overflow-hidden border-b border-game-border">
                 <div ref={mountRef} className="absolute inset-0 z-0 opacity-80" />
 
                 <div className="relative z-10 text-center px-6">
                     <div className="overflow-hidden">
-                        <h1 className="hero-glitch text-[12vw] leading-[0.85] font-black uppercase tracking-[-0.05em] font-mono text-transparent bg-clip-text bg-gradient-to-br from-white via-white to-gray-500 hover:text-game-red transition-colors duration-300 select-none">
-                            Master The <br /> <span className="text-stroke-2">Grid</span>
+                        <h1 className="hero-glitch text-[12vw] leading-[0.85] font-black uppercase tracking-[-0.05em] font-mono text-transparent bg-clip-text bg-gradient-to-br from-game-white via-game-white to-gray-500 hover:text-game-red transition-colors duration-300 select-none">
+                            Master The <br /> <span className="text-stroke-primary">Grid</span>
                         </h1>
                     </div>
 
@@ -289,10 +261,10 @@ export default function LandingPage() {
             <section className="highlights-container h-screen w-[300%] flex flex-nowrap bg-game-dark relative overflow-hidden">
 
                 {/* Panel 1: Jett Knife */}
-                <div className="highlight-panel w-screen h-full flex items-center justify-center p-10 md:p-32 flex-shrink-0 relative border-r border-white/10">
+                <div className="highlight-panel w-screen h-full flex items-center justify-center p-10 md:p-32 flex-shrink-0 relative border-r border-game-border">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center w-full max-w-[1600px]">
                         <div className="order-2 md:order-1">
-                            <h2 className="text-6xl md:text-8xl font-black uppercase mb-4 text-white">
+                            <h2 className="text-6xl md:text-8xl font-black uppercase mb-4 text-game-white">
                                 Snake <span className="text-game-red">Protocol</span>
                             </h2>
                             <p className="text-xl text-game-gray max-w-lg mb-8">
@@ -313,7 +285,7 @@ export default function LandingPage() {
                 </div>
 
                 {/* Panel 2: Cyberpunk City */}
-                <div className="highlight-panel w-screen h-full flex items-center justify-center p-10 md:p-32 flex-shrink-0 relative border-r border-white/10 bg-[#000]">
+                <div className="highlight-panel w-screen h-full flex items-center justify-center p-10 md:p-32 flex-shrink-0 relative border-r border-game-border bg-black">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center w-full max-w-[1600px]">
                         <div className="h-[50vh] bg-black relative border-2 border-game-yellow p-2">
                             <img
@@ -325,7 +297,7 @@ export default function LandingPage() {
                         </div>
                         <div>
                             <h2 className="text-6xl md:text-8xl font-black uppercase mb-4 text-game-yellow">
-                                Siege <span className="text-white">Engine</span>
+                                Siege <span className="text-game-white">Engine</span>
                             </h2>
                             <p className="text-xl text-game-gray max-w-lg mb-8">
                                 Strategic warfare on a 3x3 matrix. Defeat the adaptive AI or challenge rival agents.
@@ -352,9 +324,9 @@ export default function LandingPage() {
             </section>
 
             {/* NEXT GEN ENGINE (Features) */}
-            <section className="py-32 px-6 bg-game-dark border-t border-white/10 relative z-10">
+            <section className="py-32 px-6 bg-game-dark border-t border-game-border relative z-10">
                 <div className="max-w-[1400px] mx-auto">
-                    <div className="flex flex-col md:flex-row justify-between items-end mb-20 border-b border-white/10 pb-10">
+                    <div className="flex flex-col md:flex-row justify-between items-end mb-20 border-b border-game-border pb-10">
                         <h3 className="text-5xl md:text-7xl font-black uppercase tracking-tighter">
                             Agent <br /> <span className="text-game-red">Abilities</span>
                         </h3>
@@ -370,9 +342,9 @@ export default function LandingPage() {
                             { icon: Radio, title: "Global Comms", desc: "Real-time voice architecture integration." },
                             { icon: Crosshair, title: "Pixel Perfect", desc: "128-tick servers as standard." }
                         ].map((feat, i) => (
-                            <div key={i} className="group p-10 border border-white/10 hover:border-game-red transition-all cursor-pointer bg-white/5 hover:bg-white/10 relative overflow-hidden">
+                            <div key={i} className="group p-10 border border-game-border hover:border-game-red transition-all cursor-pointer bg-game-input hover:bg-game-surface relative overflow-hidden">
                                 <div className="absolute top-0 right-0 p-2 opacity-50">
-                                    <feat.icon className="w-12 h-12 text-white/10 group-hover:text-game-red/20 transition-colors" />
+                                    <feat.icon className="w-12 h-12 text-game-white/10 group-hover:text-game-red/20 transition-colors" />
                                 </div>
                                 <div className="text-4xl font-black mb-4 group-hover:text-game-red transition-colors">0{i + 1}</div>
                                 <h4 className="text-xl font-bold uppercase mb-2">{feat.title}</h4>
@@ -406,8 +378,8 @@ export default function LandingPage() {
                 .clip-path-slant {
                     clip-path: polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0 30%);
                 }
-                .text-stroke-2 {
-                    -webkit-text-stroke: 2px #FF4655;
+                .text-stroke-primary {
+                    -webkit-text-stroke: 2px var(--primary);
                     color: transparent;
                 }
             `}</style>

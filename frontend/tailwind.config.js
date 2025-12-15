@@ -8,11 +8,14 @@ export default {
         extend: {
             colors: {
                 game: {
-                    dark: '#0F1923', // Valorant Dark Navy
-                    red: '#FF4655',  // Valorant Red
-                    yellow: '#FCE300', // Cyberpunk Yellow
-                    white: '#FFFFFF',
-                    gray: '#B0B0B0'
+                    dark: 'var(--bg-core)', // Dynamic Navy/Black/White
+                    red: 'var(--primary)',  // Dynamic Red/Gold/Blue
+                    yellow: 'var(--secondary)', // Dynamic Yellow/White/Navy
+                    white: 'var(--text-main)', // Dynamic Text
+                    gray: 'var(--text-dim)',
+                    surface: 'var(--surface)',
+                    border: 'var(--border)',
+                    input: 'var(--bg-input)'
                 },
                 ribbit: {
                     dark: '#0D0D0D', // Cinematic Black

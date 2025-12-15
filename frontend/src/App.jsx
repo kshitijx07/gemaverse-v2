@@ -14,26 +14,30 @@ import SnakeGame from './pages/SnakeGame';
 import TicTacToeGame from './pages/TicTacToeGame';
 import { AudioProvider } from './context/AudioContext';
 
+import { ThemeProvider } from './context/ThemeContext';
+
 function App() {
   return (
     <AudioProvider>
-      <Router>
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/matchmaking" element={<Matchmaking />} />
-          <Route path="/leaderboard" element={<Leaderboard />} />
-          <Route path="/reviews" element={<GameReviews />} />
-          <Route path="/stats" element={<MyStats />} />
-          <Route path="/chat" element={<ChatPage />} />
-          <Route path="/games" element={<GamesPage />} />
-          <Route path="/games/snake" element={<SnakeGame />} />
-          <Route path="/games/tictactoe" element={<TicTacToeGame />} />
-        </Routes>
-      </Router>
+      <ThemeProvider>
+        <Router>
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/matchmaking" element={<Matchmaking />} />
+            <Route path="/leaderboard" element={<Leaderboard />} />
+            <Route path="/reviews" element={<GameReviews />} />
+            <Route path="/stats" element={<MyStats />} />
+            <Route path="/chat" element={<ChatPage />} />
+            <Route path="/games" element={<GamesPage />} />
+            <Route path="/games/snake" element={<SnakeGame />} />
+            <Route path="/games/tictactoe" element={<TicTacToeGame />} />
+          </Routes>
+        </Router>
+      </ThemeProvider>
     </AudioProvider>
   );
 }

@@ -13,6 +13,8 @@
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.4.2",
     "@stomp/stompjs": "^7.2.1",
+    "@tensorflow-models/handpose": "^0.1.0",
+    "@tensorflow/tfjs": "^4.22.0",
     "axios": "^1.13.2",
     "framer-motion": "^12.23.26",
     "gsap": "^3.14.1",

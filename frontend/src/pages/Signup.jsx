@@ -1,11 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { gsap } from 'gsap';
-import { ArrowLeft, User, Lock, Mail, ArrowRight, AlertCircle, Cpu, Hexagon } from 'lucide-react';
+import { ArrowLeft, User, Lock, Mail, ArrowRight, AlertCircle, Cpu, Hexagon, Palette } from 'lucide-react';
 import axios from 'axios';
+import { useTheme } from '../context/ThemeContext';
 
 export default function Signup() {
     const navigate = useNavigate();
+    const { theme, cycleTheme } = useTheme();
     const containerRef = useRef(null);
     const formRef = useRef(null);
 
@@ -84,7 +86,7 @@ export default function Signup() {
     };
 
     return (
-        <div ref={containerRef} className="min-h-screen bg-game-dark text-white flex items-center justify-center relative overflow-hidden p-6 font-sans">
+        <div ref={containerRef} className="min-h-screen bg-game-dark text-game-white flex items-center justify-center relative overflow-hidden p-6 font-sans">
 
             {/* Background Grid */}
             <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 pointer-events-none" />
@@ -92,14 +94,24 @@ export default function Signup() {
                 style={{ backgroundImage: "linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px)", backgroundSize: "40px 40px" }}
             />
 
-            {/* Back Link */}
-            <Link to="/" className="absolute top-8 left-8 flex items-center gap-2 text-game-gray hover:text-game-red transition-colors font-mono uppercase tracking-widest text-xs group z-50">
-                <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-                Return to Base
-            </Link>
+            {/* Top Bar */}
+            <div className="absolute top-8 left-8 right-8 flex justify-between items-center z-50">
+                <Link to="/" className="flex items-center gap-2 text-game-gray hover:text-game-red transition-colors font-mono uppercase tracking-widest text-xs group">
+                    <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                    Return to Base
+                </Link>
+
+                <button
+                    onClick={cycleTheme}
+                    className="text-game-gray hover:text-game-red transition-colors"
+                    title={`Theme: ${theme.name}`}
+                >
+                    <Palette className="w-6 h-6" />
+                </button>
+            </div>
 
             {/* Signup HUD */}
-            <div ref={formRef} className="relative z-20 w-full max-w-md bg-[#0F1923]/95 border border-white/10 p-10 md:p-12 shadow-2xl backdrop-blur-sm clip-path-hud">
+            <div ref={formRef} className="relative z-20 w-full max-w-md bg-game-surface border border-game-border p-10 md:p-12 shadow-2xl backdrop-blur-sm clip-path-hud">
 
                 {/* HUD Corners */}
                 <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-game-yellow" />
@@ -107,10 +119,10 @@ export default function Signup() {
 
                 <div className="hud-item mb-10 text-center relative">
                     <div className="inline-flex items-center justify-center w-16 h-16 mb-4 relative">
-                        <Hexagon className="w-full h-full text-white/5 absolute animate-spin-reverse-slow" />
+                        <Hexagon className="w-full h-full text-game-white/5 absolute animate-spin-reverse-slow" />
                         <Cpu className="w-8 h-8 text-game-yellow relative z-10" />
                     </div>
-                    <h2 className="text-3xl font-black uppercase tracking-tighter text-white">
+                    <h2 className="text-3xl font-black uppercase tracking-tighter text-game-white">
                         New <span className="text-transparent bg-clip-text bg-gradient-to-l from-game-red to-game-yellow">Recruit</span>
                     </h2>
                     <p className="text-game-gray font-mono text-xs mt-3 tracking-widest">INITIALIZING PROFILE CREATION</p>
@@ -133,7 +145,7 @@ export default function Signup() {
                                 name="username"
                                 value={formData.username}
                                 onChange={handleChange}
-                                className="w-full bg-black/40 border border-white/10 py-3.5 px-4 text-white placeholder-gray-700 outline-none focus:border-game-yellow focus:bg-black/60 transition-all font-mono text-sm clip-path-input"
+                                className="w-full bg-game-input border border-game-border py-3.5 px-4 text-game-white placeholder-gray-500 outline-none focus:border-game-yellow focus:bg-game-surface transition-all font-mono text-sm clip-path-input"
                                 placeholder="CODENAME"
                                 required
                             />
@@ -149,7 +161,7 @@ export default function Signup() {
                                 name="email"
                                 value={formData.email}
                                 onChange={handleChange}
-                                className="w-full bg-black/40 border border-white/10 py-3.5 px-4 text-white placeholder-gray-700 outline-none focus:border-game-yellow focus:bg-black/60 transition-all font-mono text-sm clip-path-input"
+                                className="w-full bg-game-input border border-game-border py-3.5 px-4 text-game-white placeholder-gray-500 outline-none focus:border-game-yellow focus:bg-game-surface transition-all font-mono text-sm clip-path-input"
                                 placeholder="LINK@SERVER.NET"
                                 required
                             />
@@ -166,7 +178,7 @@ export default function Signup() {
                                     name="password"
                                     value={formData.password}
                                     onChange={handleChange}
-                                    className="w-full bg-black/40 border border-white/10 py-3.5 px-4 text-white placeholder-gray-700 outline-none focus:border-game-yellow focus:bg-black/60 transition-all font-mono text-sm clip-path-input"
+                                    className="w-full bg-game-input border border-game-border py-3.5 px-4 text-game-white placeholder-gray-500 outline-none focus:border-game-yellow focus:bg-game-surface transition-all font-mono text-sm clip-path-input"
                                     placeholder="•••••"
                                     required
                                 />
@@ -182,7 +194,7 @@ export default function Signup() {
                                     name="confirmPassword"
                                     value={formData.confirmPassword}
                                     onChange={handleChange}
-                                    className="w-full bg-black/40 border border-white/10 py-3.5 px-4 text-white placeholder-gray-700 outline-none focus:border-game-yellow focus:bg-black/60 transition-all font-mono text-sm clip-path-input"
+                                    className="w-full bg-game-input border border-game-border py-3.5 px-4 text-game-white placeholder-gray-500 outline-none focus:border-game-yellow focus:bg-game-surface transition-all font-mono text-sm clip-path-input"
                                     placeholder="•••••"
                                     required
                                 />
@@ -208,7 +220,7 @@ export default function Signup() {
                 <div className="hud-item mt-8 text-center border-t border-white/10 pt-6">
                     <p className="text-xs text-game-gray font-mono">
                         ALREADY OPERATIONAL?{' '}
-                        <Link to="/login" className="text-white font-bold hover:text-game-red transition-colors tracking-wider decoration-game-red underline underline-offset-4">
+                        <Link to="/login" className="text-game-white font-bold hover:text-game-red transition-colors tracking-wider decoration-game-red underline underline-offset-4">
                             SYSTEM LOGIN
                         </Link>
                     </p>

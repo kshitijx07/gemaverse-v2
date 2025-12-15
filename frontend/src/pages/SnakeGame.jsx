@@ -1,9 +1,10 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { gsap } from 'gsap';
-import { ArrowLeft, Trophy, Activity, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Trophy, Activity, AlertTriangle, Palette } from 'lucide-react';
 import axios from 'axios';
 import { useAudio } from '../context/AudioContext';
+import { useTheme } from '../context/ThemeContext';
 
 const GRID_SIZE = 20;
 const CELL_SIZE = 20; // Will be dynamic based on container
@@ -11,6 +12,7 @@ const SPEED = 100;
 
 export default function SnakeGame() {
     const { playArcadePoint, playError, playClick } = useAudio();
+    const { theme, cycleTheme } = useTheme();
 
     const navigate = useNavigate();
     const canvasRef = useRef(null);
@@ -23,8 +25,6 @@ export default function SnakeGame() {
     const [highScore, setHighScore] = useState(0);
     const [gameOver, setGameOver] = useState(false);
     const [gameStarted, setGameStarted] = useState(false);
-
-
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState(null);
@@ -190,11 +190,11 @@ export default function SnakeGame() {
         const ctx = canvas.getContext('2d');
 
         // Clear
-        ctx.fillStyle = '#0F1923';
+        ctx.fillStyle = theme.colors['--bg-dark']; // Dynamic BG
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         // Draw Grid (Subtle)
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+        ctx.strokeStyle = theme.colors['--border'];
         ctx.lineWidth = 1;
         for (let i = 0; i <= 30; i++) {
             ctx.beginPath();
@@ -210,33 +210,43 @@ export default function SnakeGame() {
         }
 
         // Draw Food
-        ctx.fillStyle = '#FCE300';
-        ctx.shadowColor = '#FCE300';
+        ctx.fillStyle = theme.colors['--secondary'];
+        ctx.shadowColor = theme.colors['--secondary'];
         ctx.shadowBlur = 10;
         ctx.fillRect(food.x * 20, food.y * 20, 18, 18);
         ctx.shadowBlur = 0;
 
         // Draw Snake
         snake.forEach((segment, i) => {
-            ctx.fillStyle = i === 0 ? '#FFFFFF' : '#FF4655'; // Head White, Body Red
+            ctx.fillStyle = i === 0 ? theme.colors['--text-main'] : theme.colors['--primary']; // Head Text/White, Body Primary
             ctx.fillRect(segment.x * 20, segment.y * 20, 18, 18);
         });
 
-    }, [snake, food]);
+    }, [snake, food, theme]);
 
     return (
-        <div className="min-h-screen bg-game-dark text-white font-mono flex flex-col items-center justify-center p-10 cursor-none selection:bg-game-red selection:text-black">
+        <div className="min-h-screen bg-game-dark text-game-white font-mono flex flex-col items-center justify-center p-10 cursor-none selection:bg-game-red selection:text-black">
 
             {/* Header */}
             <div className="w-full max-w-4xl flex justify-between items-center mb-8">
-                <button
-                    onClick={() => navigate('/games')}
-                    className="flex items-center gap-2 text-game-gray hover:text-game-red transition-colors text-xs uppercase tracking-widest clip-path-slant bg-white/5 py-2 px-4"
-                >
-                    <ArrowLeft className="w-4 h-4" /> Abort Mission
-                </button>
+                <div className="flex items-center gap-4">
+                    <button
+                        onClick={() => navigate('/games')}
+                        className="flex items-center gap-2 text-game-gray hover:text-game-red transition-colors text-xs uppercase tracking-widest clip-path-slant bg-white/5 py-2 px-4"
+                    >
+                        <ArrowLeft className="w-4 h-4" /> Abort
+                    </button>
+                    <button
+                        onClick={cycleTheme}
+                        className="flex items-center justify-center text-game-gray hover:text-game-red transition-colors bg-white/5 w-10 h-8 clip-path-slant"
+                        title={`Theme: ${theme.name}`}
+                    >
+                        <Palette className="w-4 h-4" />
+                    </button>
+                </div>
+
                 <div className="text-center">
-                    <h1 className="text-3xl font-black italic tracking-tighter uppercase text-game-red">SNAKE <span className="text-white">PROTOCOL</span></h1>
+                    <h1 className="text-3xl font-black italic tracking-tighter uppercase text-game-red">SNAKE <span className="text-game-white">PROTOCOL</span></h1>
                     <div className="text-xs text-game-gray tracking-[0.3em]">SECURE CHANNEL ESTABLISHED</div>
                 </div>
                 <div className="bg-game-red/10 border border-game-red/50 px-6 py-2 clip-path-slant flex flex-col items-end">
@@ -254,14 +264,14 @@ export default function SnakeGame() {
                         ref={canvasRef}
                         width={600}
                         height={400}
-                        className="bg-[#0F1923] cursor-none"
+                        className="bg-game-dark cursor-none"
                     />
 
                     {/* Overlay: Game Start */}
                     {!gameStarted && !gameOver && (
                         <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm z-10">
                             <Activity className="w-16 h-16 text-game-red mb-4 animate-pulse" />
-                            <div className="text-4xl font-black uppercase italic text-white mb-2">Initialize?</div>
+                            <div className="text-4xl font-black uppercase italic text-game-white mb-2">Initialize?</div>
                             <div className="text-sm text-game-yellow font-mono tracking-widest animate-pulse">[ PRESS SPACE TO ENGAGE ]</div>
                             <div className="mt-8 text-xs text-game-gray max-w-xs text-center">
                                 Use Arrow Keys. Acquire Data Packets. Avoid Grid Walls.

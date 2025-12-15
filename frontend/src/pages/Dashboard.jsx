@@ -76,7 +76,9 @@ const InteractiveCrystal = ({ primaryColor }) => {
                     emissiveIntensity={hovered ? 2 : 0.8}
                     roughness={0.1}
                     metalness={0.9}
-                    wireframe={!hovered} // Wireframe when idle, Solid when hovered
+                    wireframe={true}
+                    transparent={true}
+                    opacity={hovered ? 0.8 : 1}
                 />
             </mesh>
 
